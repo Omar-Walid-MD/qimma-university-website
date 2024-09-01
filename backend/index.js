@@ -1,15 +1,19 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require("cors");
+require('dotenv').config()
 
 const app = express();
 
+
+const port = process.env.REACT_APP_SQL_PORT;
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  database: 'university_database',
-  password: "owmd-root-sql-425"
+  host: process.env.REACT_APP_SQL_HOST,
+  user: process.env.REACT_APP_SQL_USER,
+  database: process.env.REACT_APP_SQL_DATABASE,
+  password: process.env.REACT_APP_SQL_PASS
 });
+
 
 db.connect((err) => {
   if (err) {
@@ -167,6 +171,20 @@ app.get('/student-courses', (req, res) => {
   });
 });
 
+app.post('/student-courses', (req, res) => {
+
+  const courseInfo = req.body;
+
+  const query = 'INSERT INTO Student_Courses VALUES (?)';
+  db.query(query,[courseInfo], (err, data) => {
+    if (err) {
+      console.error('Error inserting login:', err);
+      return res.status(500).json({ error: 'Failed to insert login' });
+    }
+    res.json(data);
+  });
+});
+
 app.get('/professor-courses', (req, res) => {
   const query = 'SELECT * FROM Professor_Courses ' + req.query.condition;
   db.query(query, (err, data) => {
@@ -203,6 +221,6 @@ app.post('/login', (req, res) => {
   });
 });
 
-app.listen(8000, () => {
-  console.log('Server listening on port 8000');
+app.listen(port, () => {
+  console.log(`Server listening on port: ${port}`);
 });

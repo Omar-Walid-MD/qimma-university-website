@@ -11,8 +11,8 @@ const schemas = [
   yup.object({
 
     Name: yup.string().required("رجاءا أدخل إسم الطالب"),
-    Date_Of_Birth: yup.date().typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد الطالب"),
-    National_ID: yup.string().required("رجاءا أدخل الرقم القومي للطالب"),
+    Date_Of_Birth: yup.date().typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد الطالب").max(new Date("2006-1-1"),"تاريخ الميلاد يجب أن يكون قبل 2006"),
+    National_ID: yup.string().required("رجاءا أدخل الرقم القومي للطالب").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
     Mobile_No: yup.string().required("رجاءا أدخل رقم هاتف للطالب"),
     Extra_Mobile_No: yup.string(),
     Address: yup.string().required("رجاءا أدخل عنوان الطالب"),
@@ -27,7 +27,7 @@ const schemas = [
 
     Name: yup.string().required("رجاءا أدخل إسم ولي الأمر"),
     Date_Of_Birth: yup.date("").typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد ولي الأمر"),
-    National_ID: yup.string().required("رجاءا أدخل الرقم القومي لولي الأمر"),
+    National_ID: yup.string().required("رجاءا أدخل الرقم القومي لولي الأمر").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
     Mobile_No: yup.string().required("رجاءا أدخل رقم هاتف لولي الأمر"),
     Address: yup.string().required("رجاءا أدخل عنوان ولي الأمر"),
     Gender: yup.string().required("رجاءا أدخل النوع"),
@@ -50,7 +50,7 @@ function Apply({}) {
 
     const navigate = useNavigate();
     
-    const [formIndex,setFormIndex] = useState(0);
+    const [formIndex,setFormIndex] = useState(1);
 
     const [faculties,setFaculties] = useState([]);
     const [departments,setDepartments] = useState([]);
@@ -63,7 +63,7 @@ function Apply({}) {
 
     const { register: registerStudentInfo, handleSubmit: handleSubmitStudentInfo, reset: resetStudentInfo, formState: { errors: errorsStudentInfo } } = useForm({ resolver: yupResolver(schemas[0]) });
     const { register: registerParentInfo, handleSubmit: handleSubmitParentInfo, reset: resetParentInfo, formState: { errors: errorsParentInfo } } = useForm({ resolver: yupResolver(schemas[1]) });
-    const { register: registerApplicationInfo, handleSubmit: handleSubmitApplicationInfo, reset: resetApplicationInfo, formState: { errors: errorsApplicationInfo } } = useForm({ resolver: yupResolver(schemas[2]) });
+    const { register: registerApplicationInfo, handleSubmit: handleSubmitApplicationInfo, reset: resetApplicationInfo, formState: { errors: errorsApplicationInfo }, setValue: setApplicationInfo } = useForm({ resolver: yupResolver(schemas[2]) });
 
     const [passwordErrorMessage,setPasswordErrorMessage] = useState("");
 
@@ -107,20 +107,19 @@ function Apply({}) {
         else if(formIndex === 2)
         {
 
-            console.log(updatedApplyInfo);
             const parent_ID_List = (await performQuery("parents")).map((p)=>p.Parent_ID.slice(1));
             const new_parent_ID = "P"+makeUniqueId(parent_ID_List,8)
-            await axios.post("http://localhost:8000/parents",
+            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/parents`,
             {...updatedApplyInfo[1],Parent_ID:new_parent_ID}
             );
     
             const student_ID_List = (await performQuery("students")).map((s)=>s.Student_ID.slice(1));
             const new_student_ID = "S"+makeUniqueId(student_ID_List,8)
-            await axios.post("http://localhost:8000/students",
+            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/students`,
             {...updatedApplyInfo[0],Student_ID:new_student_ID,Parent_ID:new_parent_ID,...updatedApplyInfo[2]}
             );
 
-            await axios.post("http://localhost:8000/login",
+            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/login`,
                 [updatedApplyInfo[0].Email,updatedApplyInfo[0].Password]
             );
 
@@ -145,9 +144,10 @@ function Apply({}) {
         <div className='page-container position-relative d-flex flex-column align-items-center justify-content-center h-100 py-3'>
             <div className='login-page-bg position-absolute'></div>
             <div className='form-container bg-white mb-3 border border-1 border-black rounded-2 shadow d-flex flex-column overflow-hidden'>
-                <div className='bg-accent text-white px-3 py-1 d-flex justify-content-between align-items-center'>
-                    <h2>طلب التحاق الطالب</h2>
-                    <img src={require("../../assets/img/light-logo.png")} style={{height:100}} alt="" />
+                
+                <div className='bg-accent text-white text-center px-3 py-1 d-flex flex-column-reverse flex-md-row justify-content-between align-items-center'>
+                    <h2 className='mb-4 mb-md-0'>طلب التحاق الطالب</h2>
+                    <img src={require("../../assets/img/light-logo.png")} style={{height:"min(100px,20vw)"}} alt="" />
                 </div>
                 
                 <div className='apply-progress-container m-4 rounded-pill overflow-hidden border border-1 border-black' style={{height:15}}>
@@ -166,15 +166,15 @@ function Apply({}) {
                                 {errorsStudentInfo.Name ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Name.message}</div> : ''}
                             </div>
 
-                            <div className='w-100 d-flex gap-5'>
-                                <div className='w-50'>
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
+                                <div className='w-100'>
                                     <div className='labeled-input'>
                                         <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerStudentInfo("Date_Of_Birth")} />
                                         <span>تاريخ الميلاد</span>
                                     </div>
                                     {errorsStudentInfo.Date_Of_Birth ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Date_Of_Birth.message}</div> : ''}
                                 </div>
-                                <div className=''>
+                                <div className='w-100'>
                                     <div className='d-flex gap-3 align-items-center'>
                                         <p className='mb-2 text-black-50'>النوع:</p>
                                         <Form.Check
@@ -198,7 +198,7 @@ function Apply({}) {
                                 </div>
                             </div>
 
-                            <div className='w-100 d-flex gap-5'>
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
@@ -218,7 +218,7 @@ function Apply({}) {
 
                             </div>
 
-                            <div className='w-100 d-flex gap-5'>
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
@@ -248,7 +248,7 @@ function Apply({}) {
                                 {errorsStudentInfo.Email ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Email.message}</div> : ''}
                             </div>
 
-                            <div className="d-flex gap-5">
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
                                 <div className='w-100'>
                                     <div className='labeled-input'>
                                         <input className='p-2 rounded-1 w-100' placeholder='' type="password" {...registerStudentInfo("Password")} />
@@ -282,9 +282,9 @@ function Apply({}) {
                                 {errorsParentInfo.Name ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Name.message}</div> : ''}
                             </div>
 
-                            <div className='w-100 d-flex gap-5'>
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
 
-                                <div className='w-50'>
+                                <div className='w-100'>
                                     <div className='labeled-input'>
                                         <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerParentInfo("Date_Of_Birth")} />
                                         <span>تاريخ الميلاد</span>
@@ -292,7 +292,7 @@ function Apply({}) {
                                     {errorsParentInfo.Date_Of_Birth ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Date_Of_Birth.message}</div> : ''}
                                 </div>
 
-                                <div>
+                                <div className='w-100'>
                                     <div className='d-flex gap-3 align-items-center'>
                                         <p className='mb-2 text-black-50'>النوع:</p>
                                         <Form.Check
@@ -314,7 +314,7 @@ function Apply({}) {
                                 </div>
                             </div>
 
-                            <div className='w-100 d-flex gap-5'>
+                            <div className='w-100 d-flex flex-column flex-md-row gap-3'>
 
 
                                 <div className='w-100'>
@@ -357,7 +357,10 @@ function Apply({}) {
                     <Carousel.Item className='bg-white'>
                         <div className="d-flex"><h4 className='border-bottom border-2 border-black pb-2 mb-4'>معلومات المجال الدراسي</h4></div>
                         <Form id='application-form-3' onSubmit={handleSubmitApplicationInfo(onSubmit)} className="d-flex flex-column w-100 gap-3 p-2">                            
-                            <Form.Select name="Faculty_ID" {...registerApplicationInfo("Faculty_ID")} onChange={(e)=>setFacultySelect(e.target.value)}>
+                            <Form.Select name="Faculty_ID" {...registerApplicationInfo("Faculty_ID")} onChange={(e)=>{
+                                setFacultySelect(e.target.value)
+                                setApplicationInfo("Department_ID","");
+                                }}>
                                 <option value="">اختر الكلية</option>
                                 {
                                     faculties.map((fac)=>
@@ -398,6 +401,7 @@ function Apply({}) {
                     </Carousel.Item>
 
                 </Carousel>
+                
                 <div className='w-100 p-4 pt-2 mt-3'>
                     {
                         formIndex>0 &&

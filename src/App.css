@@ -18,13 +18,19 @@
 
 .home-header, .home-section
 {
-  min-height: 650px;
+  min-height: auto;
 }
 
 .form-container
 {
   width: min(800px,calc(100% - 100px));
 }
+.login-form
+{
+  width: 100%;
+}
+
+
 
 .accordion-button:focus
 {
@@ -71,6 +77,11 @@ input[type=number] {
 {
   text-decoration: none !important;
   color: unset !important;
+}
+
+input::placeholder
+{
+  color: gray;
 }
 
 [type=email]
@@ -199,7 +210,7 @@ input[type=number] {
   background-size: cover;
 }
 
-.home-fac-bg
+.fac-bg
 {
   background-size: 100%;
   background-position: center;
@@ -207,7 +218,7 @@ input[type=number] {
   z-index: 1;
   transition: background-size 0.2s ease-out;
 }
-.home-fac-bg::before
+.fac-bg::before
 {
   content: "";
   position: absolute;
@@ -215,9 +226,18 @@ input[type=number] {
   background-color: rgba(0, 0, 0, 0.6);
   z-index: -1;
 }
-.home-fac-bg:hover
+.fac-bg:hover
 {
   background-size: 110%;
+}
+
+.fac-bg.home
+{
+  height: 150px;
+}
+.fac-bg.faculties
+{
+  height: 180px;
 }
 
 .home-cert-bg
@@ -306,11 +326,11 @@ input[type=number] {
 
 .info-modal > .modal-dialog
 {
-  max-width: min(1200px, calc(100% - 50px)) !important;
+  min-width: min(1200px, calc(100% - 50px)) !important;
 }
 .info-modal 
 {
-  max-width: 100% !important;
+  min-width: 100% !important;
 }
 
 
@@ -340,12 +360,13 @@ input[type=number] {
   position: absolute;
   top: 50%; transform: translate(-0.5rem,-50%);
   right: 0;
-
+  color: rgb(150, 150, 150);
   transition: top 0.1s ease-out, font-size 0.1s ease-out, background-color 0.1s ease-out, padding 0.1s ease-out;
 }
 
 .labeled-input input:focus ~span, .labeled-input input:not(:placeholder-shown) ~span
 {
+  color: black;
   background-color: white;
   top: 0;
   font-size: 0.75rem;
@@ -374,4 +395,40 @@ input[type=number] {
 .table-column .row:last-child
 {
   border: none !important;
+}
+
+.table-column-scroll-wrapper
+{
+  overflow-x: scroll;
+}
+.table-column-scroll-wrapper > .row
+{
+  margin: 0;
+  width: max(100%,1000px);
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) 
+{
+  .fac-bg.home, .fac-bg.faculties
+  {
+    height: 250px;
+  }
+
+  .login-form
+  {
+    width: 50%;
+  }
+}
+
+
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) 
+{
+  .home-header, .home-section
+  {
+    min-height: 650px;
+  }
+ 
 }

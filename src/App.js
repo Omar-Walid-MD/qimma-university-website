@@ -12,6 +12,7 @@ function App() {
   const dispatch = useDispatch();
   useEffect(()=>{
     dispatch(getLoginID());
+
   })
 
   return (

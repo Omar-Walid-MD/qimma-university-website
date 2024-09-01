@@ -54,8 +54,8 @@ function Login({}) {
         <div className='page-container position-relative d-flex flex-column align-items-center justify-content-center h-100'>
             <div className='login-page-bg position-absolute'></div>
             <Form className='form-container bg-white mb-3 border border-1 border-black rounded-2 shadow d-flex overflow-hidden'>
-                <div className='login-form-bg w-50'></div>
-                <div className='gap-4 d-flex flex-column align-items-center p-4 w-50'>
+                <div className='login-form-bg w-50 d-none d-md-block'></div>
+                <div className='login-form gap-4 d-flex flex-column align-items-center p-4'>
                     <img src={require("../../assets/img/logo.png")} style={{width:150}} className='rounded-4 shadow border border-2 border-black' />
                     
                     <h3>تسجيل الدخول</h3>

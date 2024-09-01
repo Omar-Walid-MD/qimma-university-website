@@ -22,12 +22,12 @@ function Home({}) {
             desc: "بشارة للطلاب الدوليين! يسر جامعة القمة الإعلان عن إطلاق منح دراسية جديدة للبكالوريوس والدراسات العليا. لا تفوت هذه الفرصة لتحقيق أهدافك الأكاديمية في مؤسسة تعليمية عالمية المستوى."
         },
         {
-            title: "باحثونَ من جامعة القمة يُحققونَ اختراقًا علميًا مهمًا في مجالِ [المجال العلمي]",
-            desc: "خبار رائعة من جامعة القمة! حقق فريق من الباحثين اختراقًا علميًا مهمًا في مجال [المجال العلمي]. يمتلك هذا الاكتشاف القدرة على [شرح موجز للتأثير المحتمل للاختراق]."
+            title: "باحثونَ من جامعة القمة يُحققونَ اختراقًا علميًا مهمًا في مجالِ الكيمياء",
+            desc: "أخبار رائعة من جامعة القمة! حقق فريق من الباحثين اختراقًا علميًا مهمًا في مجال الكيمياء."
         },
         {
             title: "بدءُ التسجيلِ في مؤتمر التكنولوجيا الذي تستضيفه جامعة القمة",
-            desc: "احجزوا تواريخكم! أصبح التسجيل مفتوحًا الآن لمؤتمر [اسم المؤتمر]، وهو حدث مهم في مجال التكنولوجيا. الذي تستضيفه جامعة القمة، سيجمع المؤتمر كبار الخبراء لإجراء المناقشات والعروض التقديمية. لا تفوت هذه الفرصة للتعلم من الأفضل!"
+            desc: "احجزوا تواريخكم! أصبح التسجيل مفتوحًا الآن لمؤتمر العباقرة، وهو حدث مهم في مجال التكنولوجيا. الذي تستضيفه جامعة القمة، سيجمع المؤتمر كبار الخبراء لإجراء المناقشات والعروض التقديمية. لا تفوت هذه الفرصة للتعلم من الأفضل!"
         }
         
     ]
@@ -92,9 +92,9 @@ function Home({}) {
 
     return (
         <div>
-            <header className='home-header home-bg-1 w-100 text-white p-5 d-flex align-items-center justify-content-between'>
-                <Container className='d-flex h-100 justify-content-between gap-5'>
-                    <img src={require("../assets/img/logo.png")} style={{width:350}} className='h-100 rounded-4 shadow' />
+            <header className='home-header home-bg-1 w-100 text-white p-3 p-md-5 d-flex align-items-center justify-content-between'>
+                <Container className='d-flex flex-column flex-lg-row h-100 justify-content-between align-items-center gap-5'>
+                    <img src={require("../assets/img/logo.png")} style={{width:"min(350px,calc(100vw - 50px))"}} className='h-100 rounded-4 shadow' />
                     <div>
                         <h2 className='mb-5' style={{textShadow:"3px 3px 2px rgba(0,0,0,0.8)"}}>مرحباً بكم في جامعة القمة: مكان لاستكشاف عوالم العلم والتفكير المتجددة</h2>
                         <p className='fs-5' style={{textShadow:"3px 3px 2px rgba(0,0,0,0.8)"}}>تعد جامعة القمة بيتاً للعلم والمعرفة، حيث يتجسد التميز في كل جانب من جوانبها. نقدم لكم بيئة تعليمية متطورة تمكنكم من التفاعل مع أفكار جديدة وتحديات ملهمة.</p>
@@ -104,23 +104,23 @@ function Home({}) {
             </header>
 
             <section className='pt-5'>
-                <Container className='d-flex flex-column align-items-start'>
+                <Container className='d-flex flex-column align-items-center align-items-lg-start'>
                     <h1 className='mb-5 border-bottom border-4 border-black pb-3'>أخر الأخبار</h1>
-                    <Carousel interval={null} variant="dark" className='w-100 h-100 home-news-carousel' controls={false}>
+                    <Carousel variant="dark" className='w-100 h-100 home-news-carousel' controls={false} >
                     {
                         newsSample.map((news,i)=>
                         
                         <Carousel.Item style={{marginBottom:100}} key={`news-${i}`}>
                             <div className='w-100 d-flex align-items-center justify-content-center m-0'>
                                 <Row className='g-0'>
-                                    <Col className='col-5'>
+                                    <Col className='col-12 col-lg-5'>
                                         <div className='image-border p-2 w-100'>
                                             <img src={require(`../assets/img/home-news/${i}.jpg`)} className='w-100 rounded-2 border shadow border-3 border-black' alt="" />
                                         </div>
                                     </Col>
-                                    <Col className='px-5 py-2'>
-                                        <div className='h-100 rounded-3 border border-2 border-black shadow d-flex flex-column justify-content-between overflow-hidden'>
-                                            <div className='p-3 '>
+                                    <Col className='px-lg-5 py-2 col-12 col-lg-7'>
+                                        <div className='h-100 w-100 rounded-3 border border-2 border-black shadow d-flex flex-column justify-content-between overflow-hidden'>
+                                            <div className='p-3 w-100'>
                                                 <h2 className='mb-4'>{news.title}</h2>
                                                 <hr />
                                                 <p className='fs-5 w-100'>{news.desc}</p>
@@ -155,26 +155,21 @@ function Home({}) {
             </section>
 
             <section className='home-section'>
-                <Container className='d-flex flex-column align-items-center p-5 gap-5'>
+                <Container className='d-flex flex-column align-items-center p-3 p-md-4 p-lg-5 gap-3 gap-md-4 gap-lg-5'>
                     <h1 className='pb-3 border-bottom border-4 border-black'>الكليات</h1>
-                    <Row className='g-5'>
+                    <Row className='g-3 g-md-4 g-lg-5'>
                     {
                         faculties.map((fac,i)=>
                         <Col className='col-12 col-lg-6' key={`fac-${i}`} >
-                            <div className='w-100 border border-2 border-black rounded-2 d-flex flex-column shadow overflow-hidden'
-                            style={{height:250}}
-                            >
-                                <div className='home-fac-bg w-100 h-100 d-flex align-items-center justify-content-center'
+                            <Link to={`/faculty/${fac.Faculty_ID}`} className='link'>
+                                <div className='fac-bg d-flex flex-column align-content-center justify-content-center w-100 text-center text-shadow bg-dark text-white p-3 p-lg-5 rounded-3 shadow overflow-hidden'
                                 style={{backgroundImage: `url(${require(`../assets/img/faculties/${fac.Faculty_ID}.jpg`)}`}}
                                 >
-                                    <h3 className='text-white fw-bold text-shadow'>{fac.Faculty_Name}</h3>
+                                    <h3 className='py-2 py-lg-4'>{fac.Faculty_Name}</h3>
+                                    <hr className='m-2'/>
+                                    <p >اعرف المزيد</p>
                                 </div>
-                                <Button variant='transparent' as={Link} className='border-0 rounded-0 bg-white p-2 link w-100 text-start' to={`/faculty/${fac.Faculty_ID}`}>
-                                    اعرف المزيد
-                                    <IoMdArrowDropleftCircle className='ms-2' size={25} />
-                                </Button>
-
-                            </div>
+                            </Link>
                         </Col>
                     )
                     }
@@ -183,8 +178,8 @@ function Home({}) {
                 </Container>
             </section>
 
-            <section className='home-section home-cert-bg d-flex flex-column align-items-center p-5 gap-5'>
-                <Container className='d-flex flex-column align-items-center p-5 gap-5'>
+            <section className='home-section home-cert-bg d-flex flex-column align-items-center p-3 p-md-4 p-lg-5'>
+                <Container className='d-flex flex-column align-items-center p-3 p-md-4 p-lg-5 gap-3 gap-md-4 gap-lg-5'>
                     <h1 className='py-3 border-bottom border-4 border-black'>امتيازات الجودة لدينا</h1>
                     <Row className='w-100 g-5 d-flex justify-content-center'>
                     {

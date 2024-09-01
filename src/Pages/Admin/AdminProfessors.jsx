@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { useSelector } from 'react-redux';
+import { IoMdArrowDroprightCircle } from 'react-icons/io';
+import { FaFilter, FaFilterCircleXmark } from 'react-icons/fa6';
 
 const filterSchema = yup.object({
 
@@ -25,6 +27,14 @@ function AdminProfessors({}) {
 
     const [departments,setDepartments] = useState([]);
 
+    const [searchFilters,setSearchFilters] = useState({
+        Name:"",
+        National_ID: "",
+        Mobile_No: "",
+        Email: "",
+        Department_ID: ""
+    });
+
     const [filterModal,setFilterModal] = useState(false);
     const handleFilterClose = () => setFilterModal(false);
     const handleFilterShow = () => setFilterModal(true);
@@ -37,7 +47,8 @@ function AdminProfessors({}) {
 
     async function onProfFilterSubmit(data)
     {
-        if(data.Name || data.National_ID || data.Mobile_No || data.Email || data.Department_ID)
+        setSearchFilters(data);
+        if(Object.keys(data).some((key) => searchFilters[key]))
         {
             const query = "WHERE " + Object.keys(data).filter((key) => data[key]).map((key)=> `${key} LIKE "%${data[key]}%"`).join(" AND ");
             console.log(query);
@@ -67,7 +78,8 @@ function AdminProfessors({}) {
     useEffect(()=>{
         async function getProfCourses()
         {
-            setProfessorCourses(await performQuery("professor-courses",`WHERE Prof_ID = "${professorInfo.Prof_ID}"`));
+            setProfessorCourses(await performQuery("professor-courses",
+            `JOIN Courses ON Professor_Courses.Course_ID = Courses.Course_ID WHERE Prof_ID = "${professorInfo.Prof_ID}"`));
         }
         if(professorInfo) getProfCourses();
         else setProfessorCourses([]);
@@ -87,59 +99,92 @@ function AdminProfessors({}) {
 
     return (
         <div className='page-container'>
-            <Container className="p-5 d-flex flex-column align-items-center gap-5">
+            <Container className="p-3 p-md-5 d-flex flex-column align-items-center gap-4">
                 <h2 className='border-bottom border-black border-2 pb-2'>بيانات الأساتذة</h2>
-                <div className="w-100">
-                    <Link to="/dashboard">إلى لوحة البيانات</Link>
+                <div className="w-100 d-flex justify-content-center justify-content-md-start">
+                    <Button as={Link} to="/dashboard" className='main-btn primary d-flex align-items-center gap-2'>
+                    <IoMdArrowDroprightCircle size={20} />
+                    إلى لوحة البيانات
+                    </Button>
                 </div>
-                <Button className='w-100 main-btn primary fs-4' onClick={handleFilterShow}>فلاتر البحث</Button>
+                {/* <Button className='w-100 main-btn primary fs-4' onClick={handleFilterShow}>فلاتر البحث</Button> */}
                 <div className='w-100 d-flex flex-column align-items-center border border-2 shadow rounded-3 p-4 gap-3'>
-                    <div className='w-100'>
+                    {/* <div className='w-100'>
                         <Button variant='transparent' onClick={()=>{
                             getProfessors();
                         }}>محو الفلاتر</Button>
+                    </div> */}
+                    <div className='w-100 d-flex justify-content-end'>
+                    {
+                        !Object.keys(searchFilters).some((key) => searchFilters[key]) ?
+                        <Button className='main-btn d-flex align-items-center gap-2' onClick={handleFilterShow}>
+                            <FaFilter  size={20}/>
+                            فلاتر البحث
+                        </Button>
+                        :
+                        <Button className='main-btn danger d-flex align-items-center gap-2' 
+                        onClick={()=>{
+                            getProfessors();
+                            setSearchFilters({
+                                Name:"",
+                                National_ID: "",
+                                Mobile_No: "",
+                                Email: "",
+                                Department_ID: ""
+                            });
+                        }}>
+                            <FaFilterCircleXmark size={20} />
+                            محو الفلاتر
+                        </Button>
+                    }
                     </div>
-                    <div className='w-100 d-flex flex-column gap-3'>
-                        <Row className='bg-dark text-white p-2'>
-                            <Col className='col-1'>كود الأستاذ</Col>
-                            <Col className='col-2'>إسم الأستاذ</Col>
-                            <Col className='col-2'>الرقم القومي</Col>
-                            <Col className='col-1'>تاريخ الميلاد</Col>
-                            <Col className='col-2'>رقم الهاتف</Col>
-                            <Col className='col-2'>البريد الاكتروني</Col>
-                            <Col className='col-2'>العنوان</Col>
-                            <Col className='col-1'>القسم</Col>
-                        </Row>
-                        {
-                            professors.map((prof,i)=>
-                            
-                                <Row className={`py-3 px-2 border-2 ${i<professors.length-1 ? "border-bottom" : ""}`}>
-                                    <Col className='col-1 border-end border-2 border-black'>{prof.Prof_ID}</Col>
-                                    <Col className='col-2 border-end border-2 border-black'>{prof.Name}</Col>
-                                    <Col className='col-2 border-end border-2 border-black'>{prof.National_ID}</Col>
-                                    <Col className='col-1 border-end border-2 border-black'>{prof.Date_Of_Birth.split("T")[0]}</Col>
-                                    <Col className='col-1 border-end border-2 border-black'>{prof.Mobile_No}</Col>
-                                    <Col className='col-2 border-end border-2 border-black'>{prof.Email}</Col>
-                                    <Col className='col-2 border-end border-2 border-black'>{prof.Address}</Col>
-                                    <Col className='col-1 border-end border-2 border-black'>{prof.Department_ID}</Col>
-                                    <Col className='col-3'>
-                                        <Button className='main-btn primary mt-3'
-                                        onClick={()=>{
-                                            setProfessorInfo(prof);
-                                            handleProfCoursesShow();
-                                        }}
-                                        >
-                                            عرض المقررات
-                                        </Button>
-                                    </Col>
-                                </Row>
-                            )
-                        }
+                    <div className='table-column w-100 d-flex flex-column gap-3'>
+                        <div className="table-column-scroll-wrapper">
+                            <Row className='bg-dark text-white p-2'>
+                                <Col className='col-2'>كود الأستاذ</Col>
+                                <Col className='col-2'>إسم الأستاذ</Col>
+                                <Col className='col-2'>الرقم القومي</Col>
+                                <Col className='col-2'>القسم</Col>
+                                <Col className='col-4'>الخيارات</Col>
+
+                            </Row>
+                            {
+                                professors.map((prof,i)=>
+                                
+                                    <Row className={`py-3 px-2 border-2 ${i<professors.length-1 ? "border-bottom" : ""}`}>
+                                        <Col className='col-2'>{prof.Prof_ID}</Col>
+                                        <Col className='col-2'>{prof.Name}</Col>
+                                        <Col className='col-2'>{prof.National_ID}</Col>
+                                        <Col className='col-2'>{prof.Department_ID}</Col>
+                                        <Col className='col-2'>
+                                            <Button className='main-btn primary mt-3'
+                                            onClick={()=>{
+                                                setProfessorInfo(prof);
+                                                handleProfCoursesShow();
+                                            }}
+                                            >
+                                                عرض المعلومات
+                                            </Button>
+                                        </Col>
+                                        <Col className='col-2'>
+                                            <Button className='main-btn mt-3'
+                                            onClick={()=>{
+                                                setProfessorInfo(prof);
+                                                handleProfCoursesShow();
+                                            }}
+                                            >
+                                                عرض المقررات
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                )
+                            }
+                        </div>
                     </div>
                 </div>
             </Container>
 
-            <Modal show={filterModal} onHide={handleFilterClose} className='info-modal'>
+            <Modal show={filterModal} onHide={handleFilterClose} centered className='info-modal'>
                 <Modal.Header closeButton>
                 <Modal.Title>بحث عن أستاذ</Modal.Title>
                 </Modal.Header>
@@ -189,7 +234,7 @@ function AdminProfessors({}) {
 
             </Modal>
 
-            <Modal show={profCoursesModal} onHide={handleProfCoursesClose} className='info-modal'>
+            <Modal show={profCoursesModal} onHide={handleProfCoursesClose} centered className='info-modal'>
                 <Modal.Header closeButton>
                 <Modal.Title>مقررات الأستاذ</Modal.Title>
                 </Modal.Header>
@@ -202,23 +247,28 @@ function AdminProfessors({}) {
                             <div className='d-flex gap-5'>
                             {
                                 Array.from({length:2}).map((x,semester)=>
-                                <div className='w-50'>
-                                    <Row>
-                                        <Col>كود المقرر</Col>
-                                        <Col>كود القسم</Col>
-                                        <Col>المستوى</Col>
-                                        <Col>المجموعة</Col>
-                                    </Row>
-                                    {
-                                        professorCourses.filter((c) => c.Year === 2023-index && c.Semester === semester+1 ) .map((course)=>
-                                        <Row>
-                                            <Col>{course.Course_ID}</Col>
-                                            <Col>{course.Department_ID}</Col>
-                                            <Col>{course.Level}</Col>
-                                            <Col>{course.Section_Number}</Col>
+                                <div className='w-50 table-column d-flex flex-column gap-3'>
+                                    <h4 className='mb-3'>الفصل الدراسي {semester+1}</h4>
+                                    <div className="table-column-scroll-wrapper">
+                                        <Row className='bg-dark text-white p-2'>
+                                            <Col>كود المقرر</Col>
+                                            <Col className='col-3'>اسم المقرر</Col>
+                                            <Col>كود القسم</Col>
+                                            <Col>المستوى</Col>
+                                            <Col>المجموعة</Col>
                                         </Row>
-                                        )
-                                    }
+                                        {
+                                            professorCourses.filter((c) => c.Year === 2023-index && c.Semester === semester+1 ) .map((course)=>
+                                            <Row className="border-bottom border-2 border-gray">
+                                                <Col>{course.Course_ID}</Col>
+                                                <Col className='col-5'>{course.Course_Name}</Col>
+                                                <Col>{course.Department_ID}</Col>
+                                                <Col>{course.Level}</Col>
+                                                <Col>{course.Section_Number}</Col>
+                                            </Row>
+                                            )
+                                        }
+                                    </div>
                                </div>
                                 
                                 

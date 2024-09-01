@@ -48,25 +48,25 @@ function DepartmentInfo({}) {
 
     return (
         <div>
-            <header className='home-header home-fac-bg w-100 bg-dark text-white text-shadow p-5 d-flex align-items-center justify-content-between'
+            <header className='home-header fac-bg w-100 bg-dark text-white text-shadow p-5 d-flex align-items-center justify-content-between'
             style={{backgroundImage: `url(${require(`../assets/img/departments/${departmentID}.jpg`)}`}}
 
             >
-                <Container className='d-flex h-100'> 
-                    {
+                <Container className='d-flex w-100 h-100 d-flex justify-content-center justify-content-md-start'>
+                {
                         department && faculty &&
-                        <div>
+                        <div className='text-center text-md-start'>
                             <h4 className='mb-3 text-white-50'>{faculty.Faculty_Name}</h4>
                             <h1 className='mb-4'>{department.Department_Name}</h1>
-                            <Link className='link text-white-50' to={`/faculty/${faculty.Faculty_ID}`}>الرجوع الى الكليات</Link>
+                            <Link className='link text-white-50' to={`/faculty/${faculty.Faculty_ID}`}>الرجوع الى الكلية</Link>
                         </div>
                     }
                 </Container>
             </header>
-            <section className='p-5'>
-                <Container className='d-flex flex-column gap-5'>
+            <section className='p-3 p-lg-5'>
+                <Container className='d-flex flex-column gap-3 gap-lg-5'>
                     <div>
-                        <h2 className='mb-5 text-center'>المقررات الدراسية</h2>
+                        <h2 className='mb-4 mb-lg-5 text-center'>المقررات الدراسية</h2>
                         <Accordion defaultActiveKey={["0"]}>
                         {
                             Array.from({length:levelCount}).map((x,level)=>
@@ -75,7 +75,7 @@ function DepartmentInfo({}) {
                                     <h4 className='w-100 text-center'>الفرقة {level+1}</h4>
                                 </Accordion.Header>
                                 <Accordion.Body>
-                                    <div className='w-100 d-flex gap-4'>
+                                    <div className='w-100 d-flex flex-column flex-lg-row gap-4'>
                                         <div className='w-100'>
                                             <h4>الفصل الدراسي الأول</h4>
                                             <hr />

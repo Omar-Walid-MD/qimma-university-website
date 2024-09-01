@@ -4,7 +4,10 @@ import { FaArrowLeftLong } from "react-icons/fa6";
 import { getGPA, performQuery } from '../../helpers';
 import { Link, useNavigate } from 'react-router-dom';
 import { BsPersonVcard } from 'react-icons/bs';
-import { FaPercent } from 'react-icons/fa';
+import { IoMdArrowDroprightCircle } from "react-icons/io";
+import { FaPercent, FaFilter } from 'react-icons/fa';
+import { FaFilterCircleXmark } from "react-icons/fa6";
+
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
@@ -40,15 +43,14 @@ function AdminStudents({}) {
 
     async function onStudentFilterSubmit(data)
     {
+        setSearchFilters(data)
         handleStudentInfoClose();
-        if(data.Name || data.National_ID || data.Mobile_No || data.Email)
+        if(Object.keys(data).some((key) => data[key]))
         {
             const query = "WHERE " + Object.keys(data).filter((key) => data[key]).map((key)=> `${key} LIKE "%${data[key]}%"`).join(" AND ");
-            console.log(query);
             const s = await performQuery("students",query)
             setStudents(s);
             handleFilterClose();
-
         }
     }
 
@@ -57,7 +59,14 @@ function AdminStudents({}) {
         fac: "",
         dep: "",
         level: null
-    })
+    });
+
+    const [searchFilters,setSearchFilters] = useState({
+        Name: "",
+        National_ID: "",
+        Mobile_No: "",
+        Email: ""
+    });
 
     function handleFilters(prop,value)
     {
@@ -93,7 +102,6 @@ function AdminStudents({}) {
 
         if(filters.fac && filters.dep && filters.level!==null)
         {
-            console.log(filters);
             async function getStudents(){
                 setStudents(await performQuery("students",
                 `WHERE Department_ID = "${filters.dep}" AND LEVEL = ${filters.level}`));
@@ -130,60 +138,110 @@ function AdminStudents({}) {
 
     return (
         <div className='page-container'>
-            <Container className="p-5 d-flex flex-column align-items-center gap-5">
+            <Container className="p-3 p-md-5 d-flex flex-column align-items-center gap-4">
                 <h2 className='border-bottom border-black border-2 pb-2'>بيانات الطلاب</h2>
-                <div className="w-100">
-                    <Link to="/dashboard">إلى لوحة البيانات</Link>
+                <div className="w-100 d-flex justify-content-center justify-content-md-start">
+                    <Button as={Link} to="/dashboard" className='main-btn primary d-flex align-items-center gap-2'>
+                    <IoMdArrowDroprightCircle size={20} />
+                    إلى لوحة البيانات
+                    </Button>
                 </div>
-                <Button className='w-100 main-btn primary fs-4' onClick={handleFilterShow}>فلاتر البحث</Button>
                 <div className='w-100 d-flex flex-column align-items-center border border-2 shadow rounded-3 p-4 gap-3'>
-                    <div className='d-flex gap-2 align-self-start text-primary'>
-                        {filters.fac && <Button variant='transparent' className='border-0 p-0' onClick={()=>{setStudents([]);handleFilters("fac",null);handleFilters("dep",null);handleFilters("level",null);}}>{getFacultyFromID()} </Button>}
-                        {filters.dep && <Button variant='transparent' className='border-0 p-0' onClick={()=>{setStudents([]);handleFilters("dep",null);handleFilters("level",null);}}><FaArrowLeftLong /> {getDepartmentFromID()}</Button>}
-                        {filters.level!==null && <Button variant='transparent' className='border-0 p-0' onClick={()=>{setStudents([]);handleFilters("level",null)}}><FaArrowLeftLong /> الفرقة {filters.level}</Button>}
-
+                    <div className="w-100 d-flex align-items-center justify-content-between">
+                        <div className='d-flex gap-2 align-self-start text-primary'>
+                            {
+                                filters.fac && 
+                                <Button variant='transparent' className='border-0 p-0'
+                                onClick={()=>{
+                                    setStudents([]);
+                                    handleFilters("fac",null);
+                                    handleFilters("dep",null);
+                                    handleFilters("level",null);
+                                }}>الرئيسية</Button>
+                            }
+                            {
+                                filters.dep && 
+                                <Button variant='transparent' className='border-0 p-0'
+                                onClick={()=>{
+                                    setStudents([]);
+                                    // handleFilters("fac",null);
+                                    handleFilters("dep",null);
+                                    handleFilters("level",null);
+                                }}><FaArrowLeftLong /> {getFacultyFromID()} </Button>
+                            }
+                            {
+                                filters.level!==null &&
+                                <Button variant='transparent' className='border-0 p-0'
+                                onClick={()=>{
+                                    setStudents([]);
+                                    handleFilters("level",null);
+                                }}><FaArrowLeftLong /> {getDepartmentFromID()}</Button>
+                            }
+                        </div>
+                        <div>
+                        {
+                            !filters.fac &&
+                            <>
+                            {
+                                !Object.keys(searchFilters).some((key) => searchFilters[key]) ?
+                                <Button className='main-btn d-flex align-items-center gap-2' onClick={handleFilterShow}>
+                                    <FaFilter  size={20}/>
+                                    فلاتر البحث
+                                </Button>
+                                :
+                                <Button className='main-btn danger d-flex align-items-center gap-2' 
+                                onClick={()=>{
+                                    setStudents([]);
+                                    setSearchFilters({
+                                        Name: "",
+                                        National_ID: "",
+                                        Mobile_No: "",
+                                        Email: ""
+                                    });
+                                }}>
+                                    <FaFilterCircleXmark size={20} />
+                                    محو الفلاتر
+                                </Button>
+                            }
+                            </>
+                        }
+                        
+                        </div>
                     </div>
-                    <div className='w-100'>
-                        <Button variant='transparent' onClick={()=>{
-                            setStudents([]);
-                            setFilters({
-                                fac: "",
-                                dep: "",
-                                level: null
-                            });
-                        }}>محو الفلاتر</Button>
-                    </div>
+                    
                 {
                     students.length ?
                     <>
                         <h3>الطلاب</h3>
                         <div className='table-column w-100 d-flex flex-column gap-3'>
-                            <Row className='bg-dark text-white p-2'>
-                                <Col className='col-2'>كود الطالب</Col>
-                                <Col className='col-3'>إسم الطالب</Col>
-                                <Col className='col-2'>الرقم القومي</Col>
-                                <Col className='col-2'>رقم الهاتف</Col>
-                                <Col className='col-2'>المجموعة</Col>
-
-                            </Row>
-                            {
-                                students.map((s,i)=>
-
-                                <Row className="py-3 px-2 border-2 border-bottom">
-                                    <Col className='col-2'>{s.Student_ID}</Col>
-                                    <Col className='col-3'>{s.Name}</Col>
-                                    <Col className='col-2'>{s.National_ID}</Col>
-                                    <Col className='col-2'>{s.Mobile_No}</Col>
-                                    <Col className='col-1'>{s.Section_Number}</Col>
-                                    <Col className='col-2'>
-                                        <Button className='main-btn primary' onClick={()=>{handleStudentInfoShow();setStudentInfo(s)}}>
-                                            عرض المعلومات
-                                        </Button>
-                                    </Col>
+                            <div className='table-column-scroll-wrapper'>
+                                <Row className='bg-dark text-white p-2'>
+                                    <Col className='col-2'>كود الطالب</Col>
+                                    <Col className='col-3'>إسم الطالب</Col>
+                                    <Col className='col-2'>الرقم القومي</Col>
+                                    <Col className='col-2'>رقم الهاتف</Col>
+                                    <Col className='col-2'>المجموعة</Col>
 
                                 </Row>
-                                )
-                            }
+                                {
+                                    students.map((s,i)=>
+
+                                    <Row className="py-3 px-2 border-2 border-bottom">
+                                        <Col className='col-2'>{s.Student_ID}</Col>
+                                        <Col className='col-3'>{s.Name}</Col>
+                                        <Col className='col-2'>{s.National_ID}</Col>
+                                        <Col className='col-2'>{s.Mobile_No}</Col>
+                                        <Col className='col-1'>{s.Section_Number}</Col>
+                                        <Col className='col-2'>
+                                            <Button className='main-btn primary' onClick={()=>{handleStudentInfoShow();setStudentInfo(s)}}>
+                                                عرض المعلومات
+                                            </Button>
+                                        </Col>
+
+                                    </Row>
+                                    )
+                                }
+                            </div>
                         </div>
                     </> :
                     !filters.fac ?
@@ -192,7 +250,7 @@ function AdminStudents({}) {
                         <Row className='w-100'>
                         {
                             faculties.map((fac,i)=>
-                            <Col className='col-6 p-1'>
+                            <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
                                 onClick={()=>handleFilters("fac",fac.Faculty_ID)}
@@ -210,7 +268,7 @@ function AdminStudents({}) {
                         <Row className='w-100'>
                         {
                             departments.map((dep,i)=>
-                            <Col className='col-6 p-1'>
+                            <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
                                 onClick={()=>handleFilters("dep",dep.Department_ID)}
@@ -228,7 +286,7 @@ function AdminStudents({}) {
                         <Row className='w-100'>
                         {
                             Array.from({length:faculties.find((f) => f.Faculty_ID === filters.fac).NoOfLevels || 0}).map((x,i)=>
-                            <Col className='col-6 p-1'>
+                            <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
                                 onClick={()=>handleFilters("level",i+1)}
@@ -247,11 +305,11 @@ function AdminStudents({}) {
 
             </Container>
 
-            <Modal show={filterModal} onHide={handleFilterClose} className='info-modal d-flex align-items-center justify-content-between'>
+            <Modal show={filterModal} onHide={handleFilterClose} centered className='info-modal'>
                 <Modal.Header closeButton>
                 <Modal.Title>بحث عن طالب</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body >
                     <Form onSubmit={handleSubmitStudentFilters(onStudentFilterSubmit)} className="d-flex flex-column gap-3">
                         <div>
                             <div className='labeled-input'>
@@ -302,23 +360,23 @@ function AdminStudents({}) {
                                     
 
                                 <Row className='w-100 g-3'>
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>إسم الطالب:</span>
                                         <span className='fs-5'>{studentInfo.Name}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>كود الطالب:</span>
                                         <span className='fs-5'>{studentInfo.Student_ID}</span>
                                     </Col>
 
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
                                         <span className='fs-5'>{new Date(studentInfo.Date_Of_Birth).toLocaleDateString()}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الرقم القومي:</span>
                                         <span className='fs-5'>{studentInfo.National_ID}</span>
                                     </Col>
@@ -326,23 +384,28 @@ function AdminStudents({}) {
                                 </Row>
                                 <hr />
                                 <Row className='w-100 g-3'>
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الإيميل الجامعي:</span>
                                         <span className='fs-5'>{studentInfo.Email}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'> العنوان:</span>
+                                        <span className='fs-5'>{studentInfo.Address}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>رقم الهاتف:</span>
                                         <span className='fs-5'>{studentInfo.Mobile_No}</span>
                                     </Col>
 
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>رقم هاتف اخر:</span>
                                         <span className='fs-5'>{studentInfo.Extra_Mobile_No}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>عام الالتحاق:</span>
                                         <span className='fs-5'>{studentInfo.Year_Of_Enrollment}</span>
                                     </Col>
@@ -351,14 +414,19 @@ function AdminStudents({}) {
                                 <hr />
                                 <Row className='w-100 g-3'>
                         
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>الفرقة الدراسية:</span>
                                         <span className='fs-5'>{studentInfo.Level}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>المجموعة:</span>
                                         <span className='fs-5'>{studentInfo.Section_Number}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                    <span className='fs-6 text-black-50'>المعدل التراكمي:</span>
+                                        <span className='fs-5'>{studentInfo.GPA.toFixed(2)}</span>
                                     </Col>
 
                                 </Row>
@@ -374,17 +442,17 @@ function AdminStudents({}) {
                                     
 
                                 <Row className='w-100 g-3'>
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>إسم ولي الأمر:</span>
                                         <span className='fs-5'>{studentInfoParent.Name}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
                                         <span className='fs-5'>{new Date(studentInfoParent.Date_Of_Birth).toLocaleDateString()}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الرقم القومي:</span>
                                         <span className='fs-5'>{studentInfoParent.National_ID}</span>
                                     </Col>
@@ -392,12 +460,12 @@ function AdminStudents({}) {
                                 </Row>
                                 <hr />
                                 <Row className='w-100 g-3'>
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>البريد الالكتروني:</span>
                                         <span className='fs-5'>{studentInfoParent.Email}</span>
                                     </Col>
 
-                                    <Col className="col-6 d-flex flex-column">
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>رقم الهاتف:</span>
                                         <span className='fs-5'>{studentInfoParent.Mobile_No}</span>
                                     </Col>
@@ -425,31 +493,33 @@ function AdminStudents({}) {
                                                     <h4>الفصل الدراسي الأول</h4>
                                                     <hr />
                                                     <div className='table-column mt-4 mb-5 border border-2 rounded-3 overflow-hidden'>
-                                                        <Row className='bg-dark text-white p-2'>
-                                                            <Col className='col-2'>كود المادة</Col>
-                                                            <Col className='col-2'>إسم المادة</Col>
-                                                            <Col className='col-2'>عدد ساعاتها</Col>
+                                                        <div className="table-column-scroll-wrapper">
+                                                            <Row className='bg-dark text-white p-2'>
+                                                                <Col className='col-2'>كود المادة</Col>
+                                                                <Col className='col-2'>إسم المادة</Col>
+                                                                <Col className='col-2'>عدد ساعاتها</Col>
 
-                                                            <Col className='col-2'>تقييم أعمال السنة</Col>
-                                                            <Col className='col-2'>تقييم اختبار منتصف الفصل</Col>
-                                                            <Col className='col-2'>تقييم الاختبار النهائي</Col>
-
-                                                        </Row>
-                                                        {
-                                                            studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 1).map((c,i)=>
-
-                                                            <Row className="py-3 px-2 border-2 border-bottom">
-                                                                <Col className='col-2'>{c.Course_ID}</Col>
-                                                                <Col className='col-2'>{c.Course_Name}</Col>
-                                                                <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
-
-                                                                <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                <Col className='col-2'>تقييم أعمال السنة</Col>
+                                                                <Col className='col-2'>تقييم اختبار منتصف الفصل</Col>
+                                                                <Col className='col-2'>تقييم الاختبار النهائي</Col>
 
                                                             </Row>
-                                                            )
-                                                        }
+                                                            {
+                                                                studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 1).map((c,i)=>
+
+                                                                <Row className="py-3 px-2 border-2 border-bottom">
+                                                                    <Col className='col-2'>{c.Course_ID}</Col>
+                                                                    <Col className='col-2'>{c.Course_Name}</Col>
+                                                                    <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+
+                                                                    <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+
+                                                                </Row>
+                                                                )
+                                                            }
+                                                        </div>
                                                         <Row className='bg-dark text-white text-white-50 fs-5 p-3'>
                                                             <Col>
                                                                 المعدل التراكمي للفصل الدراسي: <span className='text-white'>
@@ -465,32 +535,34 @@ function AdminStudents({}) {
                                                     <h4>الفصل الدراسي الثاني</h4>
                                                     <hr />
                                                     <div className='table-column mt-4 mb-5 border border-2 rounded-3 overflow-hidden'>
-                                                        <Row className='bg-dark text-white p-2'>
-                                                            <Col className='col-2'>كود المادة</Col>
-                                                            <Col className='col-2'>إسم المادة</Col>
-                                                            <Col className='col-2'>عدد ساعاتها</Col>
+                                                        <div className="table-column-scroll-wrapper">
+                                                            <Row className='bg-dark text-white p-2'>
+                                                                <Col className='col-2'>كود المادة</Col>
+                                                                <Col className='col-2'>إسم المادة</Col>
+                                                                <Col className='col-2'>عدد ساعاتها</Col>
 
-                                                            <Col className='col-2'>تقييم أعمال السنة</Col>
-                                                            <Col className='col-2'>تقييم اختبار منتصف الفصل</Col>
-                                                            <Col className='col-2'>تقييم الاختبار النهائي</Col>
-
-                                                        </Row>
-                                                        {
-                                                            studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 2).map((c,i)=>
-
-                                                            <Row className="py-3 px-2 border-2 border-bottom">
-                                                                <Col className='col-2'>{c.Course_ID}</Col>
-                                                                <Col className='col-2'>{c.Course_Name}</Col>
-                                                                <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
-
-                                                                <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                <Col className='col-2'>تقييم أعمال السنة</Col>
+                                                                <Col className='col-2'>تقييم اختبار منتصف الفصل</Col>
+                                                                <Col className='col-2'>تقييم الاختبار النهائي</Col>
 
                                                             </Row>
-                                                            )
+                                                            {
+                                                                studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 2).map((c,i)=>
 
-                                                        }
+                                                                <Row className="py-3 px-2 border-2 border-bottom">
+                                                                    <Col className='col-2'>{c.Course_ID}</Col>
+                                                                    <Col className='col-2'>{c.Course_Name}</Col>
+                                                                    <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+
+                                                                    <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+
+                                                                </Row>
+                                                                )
+
+                                                            }
+                                                        </div>
                                                         <Row className='bg-dark text-white text-white-50 fs-5 p-3'>
                                                             <Col>
                                                                 المعدل التراكمي للفصل الدراسي: <span className='text-white'>
