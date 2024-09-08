@@ -4,9 +4,13 @@ import { FaUsers } from "react-icons/fa";
 import { FiEye } from "react-icons/fi";
 import { IoMdArrowDropleftCircle } from "react-icons/io";
 import { Link } from 'react-router-dom';
-import { performQuery } from '../helpers';
+
+import { getFaculties } from '../Utils/queryFunctions';
+import { useSelector } from 'react-redux';
 
 function Home({}) {
+
+    const faculties = useSelector(store => store.data.faculties);
 
     const newsSample = [
         {
@@ -32,33 +36,6 @@ function Home({}) {
         
     ]
 
-    const facultiesPlaceholder = [
-        {
-            name: "الطب",
-            img: "medicine"
-        },
-        {
-            name: "الهندسة",
-            img: "engineering"
-        },
-        {
-            name: "الأعمال",
-            img: "business"
-        },
-        {
-            name: "الاداب",
-            img: "humanities"
-        },
-        {
-            name: "العلوم",
-            img: "sciences"
-        },
-        {
-            name: "طب الأسنان",
-            img: "dentistry"
-        }
-    ]
-
     const certificates = [
         {
             img: "iso_9001_2015.png",
@@ -81,14 +58,6 @@ function Home({}) {
             desc: "تؤكد التزام الجامعة بتوفير بيئة عمل آمنة وصحية للموظفين والطلاب، وتعزز ممارسات السلامة المهنية والوقاية من الحوادث والأمراض المهنية."
         }
     ]
-
-    const [faculties,setFaculties] = useState([]);
-      
-    useEffect(()=>{
-        async function getFaculties(){setFaculties(await performQuery("faculties",`LIMIT 6`));}
-        getFaculties();
-    },[]);
-
 
     return (
         <div>
@@ -159,13 +128,13 @@ function Home({}) {
                     <h1 className='pb-3 border-bottom border-4 border-black'>الكليات</h1>
                     <Row className='g-3 g-md-4 g-lg-5'>
                     {
-                        faculties.map((fac,i)=>
+                        faculties.slice(0,6).map((fac,i)=>
                         <Col className='col-12 col-lg-6' key={`fac-${i}`} >
-                            <Link to={`/faculty/${fac.Faculty_ID}`} className='link'>
+                            <Link to={`/faculty/${fac.faculty_id}`} className='link'>
                                 <div className='fac-bg d-flex flex-column align-content-center justify-content-center w-100 text-center text-shadow bg-dark text-white p-3 p-lg-5 rounded-3 shadow overflow-hidden'
-                                style={{backgroundImage: `url(${require(`../assets/img/faculties/${fac.Faculty_ID}.jpg`)}`}}
+                                style={{backgroundImage: `url(${require(`../assets/img/faculties/${fac.faculty_id}.jpg`)}`}}
                                 >
-                                    <h3 className='py-2 py-lg-4'>{fac.Faculty_Name}</h3>
+                                    <h3 className='py-2 py-lg-4'>{fac.faculty_name}</h3>
                                     <hr className='m-2'/>
                                     <p >اعرف المزيد</p>
                                 </div>

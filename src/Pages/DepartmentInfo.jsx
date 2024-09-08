@@ -3,47 +3,47 @@ import { Button, Carousel, Col, Container, Row, Accordion } from 'react-bootstra
 import { FaUsers } from "react-icons/fa";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { Link, useParams } from 'react-router-dom';
-import { performQuery } from '../helpers';
+import { getDepartment, getDepartmentCourses, getFaculty } from '../Utils/queryFunctions';
+import { useSelector } from 'react-redux';
 
 function DepartmentInfo({}) {
 
     const {departmentID} = useParams();
 
-    const [faculty,SetFaculty] = useState();
-    const [department,setDepartment] = useState([]);
+    const faculties = useSelector(store => store.data.faculties)
+    const departments = useSelector(store => store.data.departments);
+
+    const department = departments.find((dep) => dep.department_id === departmentID);
+
+    const [faculty,setFaculty] = useState();
     const [courses,setCourses] = useState([]);
 
     const [levelCount,setLevelCount] = useState(0);
 
     function getLevelCount(courses)
     {
-        return courses.reduce((max,c) => {return Math.max(max,c.Level)},0);
+        return courses.reduce((max,c) => {return Math.max(max,c.level)},0);
     }
 
-      
     useEffect(()=>{
-        async function getDepartment(){setDepartment((await performQuery("departments",`WHERE Department_ID = "${departmentID}"`))[0]);}
-        getDepartment();
+        if(department)
+        {
+            setFaculty(faculties.find((fac) => fac.faculty_id === department.faculty_id));
+        }
+    },[department])
 
+    useEffect(()=>{
 
         async function getCourses()
         {
-            const res = (await performQuery("department-courses",
-            `JOIN Courses ON Department_Courses.Course_ID = Courses.Course_ID WHERE Department_ID = "${departmentID}"`));
+            const res = await getDepartmentCourses(departmentID);
             setCourses(res);
             setLevelCount(getLevelCount(res));
         }
         getCourses();
         
-    },[]);
+    },[department]);
 
-    useEffect(()=>{
-        if(department)
-        {
-            async function getFaculty(){SetFaculty((await performQuery("faculties",`WHERE Faculty_ID = "${department.Faculty_ID}"`))[0]);}
-            getFaculty();
-        }
-    },[department])
 
 
     return (
@@ -56,9 +56,9 @@ function DepartmentInfo({}) {
                 {
                         department && faculty &&
                         <div className='text-center text-md-start'>
-                            <h4 className='mb-3 text-white-50'>{faculty.Faculty_Name}</h4>
-                            <h1 className='mb-4'>{department.Department_Name}</h1>
-                            <Link className='link text-white-50' to={`/faculty/${faculty.Faculty_ID}`}>الرجوع الى الكلية</Link>
+                            <h4 className='mb-3 text-white-50'>{faculty.faculty_name}</h4>
+                            <h1 className='mb-4'>{department.department_name}</h1>
+                            <Link className='link text-white-50' to={`/faculty/${faculty.faculty_id}`}>الرجوع الى الكلية</Link>
                         </div>
                     }
                 </Container>
@@ -86,12 +86,12 @@ function DepartmentInfo({}) {
                                                     <Col className='col-3'>عدد ساعاتها</Col>
                                                 </Row>
                                                 {
-                                                    courses.filter((c)=>c.Level === level+1 && c.Semester === 1).map((c,i)=>
+                                                    courses.filter((c)=>c.level === level+1 && c.semester === 1).map((c,i)=>
 
                                                     <Row className={`py-3 px-2 border-2 border-bottom`}>
-                                                        <Col className='col-3'>{c.Course_ID}</Col>
-                                                        <Col className='col-6'>{c.Course_Name}</Col>
-                                                        <Col className='col-3'>{c.Credit_Hours} ساعات</Col>
+                                                        <Col className='col-3'>{c.course_id}</Col>
+                                                        <Col className='col-6'>{c.course_name}</Col>
+                                                        <Col className='col-3'>{c.credit_hours} ساعات</Col>
                                                     </Row>
                                                     )
                                                 }
@@ -107,12 +107,12 @@ function DepartmentInfo({}) {
                                                     <Col className='col-3'>عدد ساعاتها</Col>
                                                 </Row>
                                                 {
-                                                    courses.filter((c)=>c.Level === level+1 && c.Semester === 2).map((c,i)=>
+                                                    courses.filter((c)=>c.level === level+1 && c.semester === 2).map((c,i)=>
 
                                                     <Row className={`py-3 px-2 border-2 border-bottom`}>
-                                                        <Col className='col-3'>{c.Course_ID}</Col>
-                                                        <Col className='col-6'>{c.Course_Name}</Col>
-                                                        <Col className='col-3'>{c.Credit_Hours} ساعات</Col>
+                                                        <Col className='col-3'>{c.course_id}</Col>
+                                                        <Col className='col-6'>{c.course_name}</Col>
+                                                        <Col className='col-3'>{c.credit_hours} ساعات</Col>
                                                     </Row>
                                                     )
                                                 }

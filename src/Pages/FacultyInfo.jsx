@@ -4,23 +4,15 @@ import { FaUsers } from "react-icons/fa";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { IoMdArrowDropleftCircle } from 'react-icons/io';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { performQuery } from '../helpers';
+import { getDepartments, getFaculty } from '../Utils/queryFunctions';
+import { useSelector } from 'react-redux';
 
 function FacultyInfo({}) {
 
     const {facultyID} = useParams();
-    const [faculty,SetFaculty] = useState();
-    const [departments,setDepartments] = useState([]);
+    const faculty = useSelector(store => store.data.faculties).find((fac) => fac.faculty_id === facultyID);
+    const departments = useSelector(store => store.data.departments).filter((dep) => dep.faculty_id === facultyID);
       
-    useEffect(()=>{
-        async function getFaculty(){SetFaculty((await performQuery("faculties",`WHERE Faculty_ID = "${facultyID}"`))[0]);}
-        getFaculty();
-
-        async function getDepartments(){setDepartments(await performQuery("departments",`WHERE Faculty_ID = "${facultyID}"`));}
-        getDepartments();
-    },[]);
-
-
     return (
         <div>
             <header className='home-header fac-bg w-100 bg-dark text-white text-shadow p-3 p-lg-5 d-flex align-items-center justify-content-between'
@@ -30,8 +22,8 @@ function FacultyInfo({}) {
                 {
                     faculty &&
                     <div className='text-shadow text-center text-md-start'>
-                        <h1 className='mb-4'>{faculty.Faculty_Name}</h1>
-                        <p className='fs-5'>{faculty.Subtitle}</p>
+                        <h1 className='mb-4'>{faculty.faculty_name}</h1>
+                        <p className='fs-5'>{faculty.subtitle}</p>
                         <hr className='mt-4' />
                         <Link className='link text-white-50 d-block' to={`/faculties`}>الرجوع الى الكليات</Link>
                     </div>
@@ -44,7 +36,7 @@ function FacultyInfo({}) {
                         faculty &&
                         <div className='text-center'>
                             <h2 className='mb-4 '>عن الكلية</h2>
-                            <p className='fs-5'>{faculty.Description}</p>
+                            <p className='fs-5'>{faculty.description}</p>
                         </div>
                     }
                     <hr />
@@ -54,11 +46,11 @@ function FacultyInfo({}) {
                         {
                             departments.map((department,i)=>
                             <Col className='col-12 col-md-6'>
-                                <Link to={`/department/${department.Department_ID}`} className='link'>
+                                <Link to={`/department/${department.department_id}`} className='link'>
                                     <div className='faculties fac-bg w-100 text-center bg-dark text-white p-5 rounded-3 shadow overflow-hidden text-shadow'
-                                    style={{backgroundImage: `url(${require(`../assets/img/departments/${department.Department_ID}.jpg`)}`}}
+                                    style={{backgroundImage: `url(${require(`../assets/img/departments/${department.department_id}.jpg`)}`}}
                                     >
-                                        <h3 className='py-2 py-lg-4'>{department.Department_Name}</h3>
+                                        <h3 className='py-2 py-lg-4'>{department.department_name}</h3>
                                         <hr className='m-2'/>
                                         <p >اعرف المزيد</p>
                                     </div>

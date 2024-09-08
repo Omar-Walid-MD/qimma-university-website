@@ -28,16 +28,8 @@ export const logOut = createAsyncThunk(
     return;
 });
 
-
-// export const addStudent = createAsyncThunk(
-//     'students/addStudent',
-//     async (newStudent) => {
-
-//         return res;
-// });
-
   
-export const settingsSlice = createSlice({
+export const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {},
@@ -50,7 +42,7 @@ export const settingsSlice = createSlice({
       })
       .addCase(getLoginID.fulfilled, (state, action) => {
         state.loginID = action.payload || "";
-        state.loggedIn = action.payload!=="";
+        state.loggedIn = action.payload!==null;
         state.loading = false;
         console.log(action.payload);
       })
@@ -87,4 +79,4 @@ export const settingsSlice = createSlice({
     },
 });
 
-export default settingsSlice.reducer;
+export default authSlice.reducer;

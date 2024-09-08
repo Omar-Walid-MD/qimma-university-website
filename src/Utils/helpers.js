@@ -1,15 +1,3 @@
-import axios from "axios";
-
-export function performQuery(table,condition="")
-{
-    async function query(table,condition="")
-    {
-        const res = await axios.get(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/${table}`,{params:{condition:condition}});
-        return res.data;
-    }
-    return query(table,condition);
-}
-
 export const makeId = function(length)
 {
     let s = "1234567890";
@@ -38,9 +26,9 @@ export function getGPA(courses)
     let gradePoints = 0;
     let credits = 0;
     courses.forEach((course)=>{
-        const t = course.Classwork_Grade+course.Midterm_Grade+course.Finals_Grade;
-        gradePoints += t/25*course.Credit_Hours;
-        credits += course.Credit_Hours;
+        const t = course.classwork_grade+course.midterm_grade+course.finals_grade;
+        gradePoints += t/25*course.credit_hours;
+        credits += course.credit_hours;
     });
 
     return (gradePoints/credits).toFixed(2);

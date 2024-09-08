@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import {Form,Container,FloatingLabel,Button} from "react-bootstrap";
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { setLoginID } from '../../Store/Slice/auth';
-import { performQuery } from '../../helpers';
+import { setLoginID } from '../../Store/Auth/authSlice';
+import { getRegisteredLogin, getStudentsFiltered } from '../../Utils/queryFunctions';
 
 function Login({}) {
 
@@ -31,11 +31,10 @@ function Login({}) {
         }
         else
         {
-            const registeredLogin = (await performQuery("login",`WHERE Email = "${loginInfo.email}"`))[0];
-            console.log(registeredLogin);
-            if(registeredLogin && loginInfo.Password === registeredLogin.password)
+            const registeredLogin = await getRegisteredLogin(loginInfo.email);
+            if(registeredLogin && loginInfo.password === registeredLogin.password)
             {
-                const studentID = (await performQuery("students",`WHERE Email = "${loginInfo.email}"`))[0].Student_ID;
+                const studentID = (await getStudentsFiltered({email: loginInfo.email}))[0].student_id;
                 dispatch(setLoginID(studentID));
                 navigate("/");
                 return;

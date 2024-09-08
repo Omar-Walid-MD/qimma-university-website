@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
-import { performQuery } from '../helpers';
 import axios from 'axios';
 import { useNavigate } from 'react-router';
+import { getStudent, getStudentAvailableCourses, getStudentRegisteredCourses, insertStudentSelectedCourses } from '../Utils/mysqlQueryFunctions';
 
 function CourseSelection({}) {
 
@@ -20,7 +20,7 @@ function CourseSelection({}) {
     {
         let sum = 0;
         selectedCourses.forEach((sc)=>{
-            sum += sc.Credit_Hours;
+            sum += sc.credit_hours;
         });
         return sum;
     }
@@ -28,8 +28,7 @@ function CourseSelection({}) {
     useEffect(()=>{
         async function getStudentInfo()
         {
-            const res = await performQuery("students",`WHERE Student_ID = "${studentID}"`);
-            setStudentInfo(res[0]);
+            setStudentInfo(await getStudent(studentID));
         }
         getStudentInfo();
     },[studentID]);
@@ -37,32 +36,22 @@ function CourseSelection({}) {
 
     useEffect(()=>{
 
-        async function getCourses()
-        {
-            setCourses(await performQuery("department-courses",
-            `JOIN Courses ON Department_Courses.Course_ID = Courses.Course_ID WHERE Department_Courses.Department_ID = "${studentInfo.Department_ID}" AND Level = ${studentInfo.Level} AND Semester = 1`))
-        }
-        async function getRegisteredCourse()
-        {
-            setRegisteredCourses(await performQuery("student-courses",
-            `JOIN Courses ON Student_Courses.Course_ID = Courses.Course_ID WHERE Student_ID = "${studentID}" AND Level = ${studentInfo.Level} AND Semester = 1`))
-        }
         if(studentInfo)
         {
-            getCourses();
-            getRegisteredCourse();
+            async function getStudentCourses()
+            {
+                setCourses(await getStudentAvailableCourses(studentInfo));
+                setRegisteredCourses(await getStudentRegisteredCourses(studentInfo));
+            }
+            getStudentCourses();
 
         }
 
     },[studentInfo]);
 
-    function submitCourses()
+    async function submitCourses()
     {
-        selectedCourses.forEach(async (selectedCourse)=>{
-            await axios.post("http://localhost:8000/student-courses",
-                [studentID, selectedCourse.Course_ID, studentInfo.Department_ID, studentInfo.Section_Number, studentInfo.Level, 2024, 1, null, null, null]
-            );
-        });
+        await insertStudentSelectedCourses(studentInfo,selectedCourses);
         navigate("/");
     }
 
@@ -91,9 +80,9 @@ function CourseSelection({}) {
                             courses.map((course,i)=>
                             !selectedCourses.includes(course) &&
                             <Row className='p-2 border-bottom border-2 border-black'>
-                                <Col className='col-3'>{course.Course_ID}</Col>
-                                <Col className='col-5'>{course.Course_Name}</Col>
-                                <Col className='col-2'>{course.Credit_Hours}</Col>
+                                <Col className='col-3'>{course.course_id}</Col>
+                                <Col className='col-5'>{course.course_name}</Col>
+                                <Col className='col-2'>{course.credit_hours}</Col>
                                 <Col className='col-2'>
                                     <Button className='main-btn primary'
                                     onClick={()=>{
@@ -120,13 +109,13 @@ function CourseSelection({}) {
                             selectedCourses.map((selectedCourse,i)=>
                             
                             <Row className='p-2 border-bottom border-2 border-black'>
-                                <Col className='col-3'>{selectedCourse.Course_ID}</Col>
-                                <Col className='col-6'>{selectedCourse.Course_Name}</Col>
-                                <Col className='col-2'>{selectedCourse.Credit_Hours}</Col>
+                                <Col className='col-3'>{selectedCourse.course_id}</Col>
+                                <Col className='col-6'>{selectedCourse.course_name}</Col>
+                                <Col className='col-2'>{selectedCourse.credit_hours}</Col>
                                 <Col className='col-1 px-3'>
                                     <Button className='main-btn danger'
                                     onClick={()=>{
-                                        setSelectedCourses(s => s.filter((sc) => sc.Course_ID !== selectedCourse.Course_ID))
+                                        setSelectedCourses(s => s.filter((sc) => sc.course_id !== selectedCourse.course_id))
                                     }}
                                     
                                     >إزالة</Button>

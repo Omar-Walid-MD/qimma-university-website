@@ -5,6 +5,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
     "@reduxjs/toolkit": "^2.2.3",
+    "@supabase/supabase-js": "^2.45.3",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -34,7 +35,6 @@
   "browser": {
     "crypto": false
   },
-
   "scripts": {
     "start": "concurrently npm:run:*",
     "run:start": "react-scripts start",

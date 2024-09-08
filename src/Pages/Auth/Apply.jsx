@@ -4,42 +4,44 @@ import { Link, useNavigate } from 'react-router-dom';
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from 'react-hook-form';
-import { makeUniqueId, performQuery } from '../../helpers';
+import { makeUniqueId } from '../../Utils/helpers';
 import axios from 'axios';
+import { addLogin, addParent, addStudent, getAllParentsIds, getAllStudentsIds } from '../../Utils/queryFunctions';
+import { useSelector } from 'react-redux';
 
 const schemas = [
   yup.object({
 
-    Name: yup.string().required("رجاءا أدخل إسم الطالب"),
-    Date_Of_Birth: yup.date().typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد الطالب").max(new Date("2006-1-1"),"تاريخ الميلاد يجب أن يكون قبل 2006"),
-    National_ID: yup.string().required("رجاءا أدخل الرقم القومي للطالب").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
-    Mobile_No: yup.string().required("رجاءا أدخل رقم هاتف للطالب"),
-    Extra_Mobile_No: yup.string(),
-    Address: yup.string().required("رجاءا أدخل عنوان الطالب"),
-    Gender: yup.string().required("رجاءا أدخل النوع"),
-    Email: yup.string().email("البريد الإلكتروني غير صالح").required("رجاءا أدخل البريد الإلكتروني للطالب"),
-    Password: yup.string().required("رجاءا أدخل كلمة السر"),
-    ConfirmPassword: yup.string().required("رجاءا أدخل تأكيد كلمة السر"),
+    name: yup.string().required("رجاءا أدخل إسم الطالب"),
+    date_of_birth: yup.date().typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد الطالب").max(new Date("2006-1-1"),"تاريخ الميلاد يجب أن يكون قبل 2006"),
+    national_id: yup.string().required("رجاءا أدخل الرقم القومي للطالب").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
+    mobile_no: yup.string().required("رجاءا أدخل رقم هاتف للطالب"),
+    extra_mobile_no: yup.string(),
+    address: yup.string().required("رجاءا أدخل عنوان الطالب"),
+    gender: yup.string().required("رجاءا أدخل النوع"),
+    email: yup.string().email("البريد الإلكتروني غير صالح").required("رجاءا أدخل البريد الإلكتروني للطالب"),
+    password: yup.string().required("رجاءا أدخل كلمة السر"),
+    confirmpassword: yup.string().required("رجاءا أدخل تأكيد كلمة السر"),
   
 }).required(),
   yup.object({
 
 
-    Name: yup.string().required("رجاءا أدخل إسم ولي الأمر"),
-    Date_Of_Birth: yup.date("").typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد ولي الأمر"),
-    National_ID: yup.string().required("رجاءا أدخل الرقم القومي لولي الأمر").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
-    Mobile_No: yup.string().required("رجاءا أدخل رقم هاتف لولي الأمر"),
-    Address: yup.string().required("رجاءا أدخل عنوان ولي الأمر"),
-    Gender: yup.string().required("رجاءا أدخل النوع"),
-    Email: yup.string().email("البريد الإلكتروني غير صالح").required("رجاءا أدخل البريد الإلكتروني لولي الأمر"),
+    name: yup.string().required("رجاءا أدخل إسم ولي الأمر"),
+    date_of_birth: yup.date("").typeError("رجاءا أدخل تاريخ صحيح").required("رجاءا أدخل تاريخ ميلاد ولي الأمر"),
+    national_id: yup.string().required("رجاءا أدخل الرقم القومي لولي الأمر").min(14,"الرقم القومي غير صالح").max(14,"الرقم القومي غير صالح"),
+    mobile_no: yup.string().required("رجاءا أدخل رقم هاتف لولي الأمر"),
+    address: yup.string().required("رجاءا أدخل عنوان ولي الأمر"),
+    gender: yup.string().required("رجاءا أدخل النوع"),
+    email: yup.string().email("البريد الإلكتروني غير صالح").required("رجاءا أدخل البريد الإلكتروني لولي الأمر"),
 
     
   }).required(),
   yup.object({
 
-    Faculty_ID: yup.string().required("رجاءا اختر الكلية"),
-    Department_ID: yup.string().required("رجاءا اختر القسم العلمي"),
-    Level: yup.number().required("رجاءا اختر المستوى")
+    faculty_id: yup.string().required("رجاءا اختر الكلية"),
+    department_id: yup.string().required("رجاءا اختر القسم العلمي"),
+    level: yup.number().required("رجاءا اختر المستوى")
 
   }).required(),
   
@@ -52,8 +54,10 @@ function Apply({}) {
     
     const [formIndex,setFormIndex] = useState(1);
 
-    const [faculties,setFaculties] = useState([]);
-    const [departments,setDepartments] = useState([]);
+    const faculties = useSelector(store => store.data.faculties);
+    const departments = useSelector(store => store.data.departments);
+
+    const [filteredDepartments,setFilteredDepartments] = useState(departments);
 
     const [facultySelect,setFacultySelect] = useState("");
 
@@ -69,7 +73,7 @@ function Apply({}) {
 
     function getFacultyLevels()
     {
-        const fac = faculties.find((f) => f.Faculty_ID === facultySelect);
+        const fac = faculties.find((f) => f.faculty_id === facultySelect);
         return fac ? fac.NoOfLevels : 0;
     }
 
@@ -83,14 +87,14 @@ function Apply({}) {
         let updatedApplyInfo = applyInfo.map((info,index) => index===formIndex ? ({...info,...data}) : info);
         setApplyInfo(updatedApplyInfo);
 
-        // if(updatedApplyInfo[0].Date_Of_Birth) updatedApplyInfo[0].Date_Of_Birth = updatedApplyInfo[0].Date_Of_Birth.split("T")[0]; 
-        // if(updatedApplyInfo[1].Date_Of_Birth) updatedApplyInfo[1].Date_Of_Birth = updatedApplyInfo[1].Date_Of_Birth.split("T")[0];
+        // if(updatedApplyInfo[0].date_of_birth) updatedApplyInfo[0].date_of_birth = updatedApplyInfo[0].date_of_birth.split("T")[0]; 
+        // if(updatedApplyInfo[1].date_of_birth) updatedApplyInfo[1].date_of_birth = updatedApplyInfo[1].date_of_birth.split("T")[0];
         
         console.log(updatedApplyInfo);
 
         if(formIndex === 0)
         {
-            if(updatedApplyInfo.Password !== updatedApplyInfo.ConfirmPassword)
+            if(updatedApplyInfo.password !== updatedApplyInfo.confirmpassword)
             {
                 setPasswordErrorMessage("كلمة المرور غير متوافقة.");
             }
@@ -107,21 +111,16 @@ function Apply({}) {
         else if(formIndex === 2)
         {
 
-            const parent_ID_List = (await performQuery("parents")).map((p)=>p.Parent_ID.slice(1));
+            const parent_ID_List = await getAllParentsIds().map((p_id)=>p_id.slice(1));
             const new_parent_ID = "P"+makeUniqueId(parent_ID_List,8)
-            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/parents`,
-            {...updatedApplyInfo[1],Parent_ID:new_parent_ID}
-            );
+            await addParent({...updatedApplyInfo[1],parent_id:new_parent_ID});
     
-            const student_ID_List = (await performQuery("students")).map((s)=>s.Student_ID.slice(1));
+            const student_ID_List = await getAllStudentsIds().map((s_id)=>s_id.slice(1));
             const new_student_ID = "S"+makeUniqueId(student_ID_List,8)
-            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/students`,
-            {...updatedApplyInfo[0],Student_ID:new_student_ID,Parent_ID:new_parent_ID,...updatedApplyInfo[2]}
-            );
 
-            await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/login`,
-                [updatedApplyInfo[0].Email,updatedApplyInfo[0].Password]
-            );
+            await addStudent({...updatedApplyInfo[0],student_id:new_student_ID,parent_id:new_parent_ID,...updatedApplyInfo[2]});
+
+            await addLogin([updatedApplyInfo[0].email,updatedApplyInfo[0].password]);
 
             navigate("/");
         }
@@ -130,14 +129,9 @@ function Apply({}) {
     }
 
     useEffect(()=>{
-        async function getFaculties(){setFaculties(await performQuery("faculties"));}
-        getFaculties();
-    },[]);
+        setFilteredDepartments(departments.filter((dep) => dep.faculty_id === facultySelect))
+    },[facultySelect])
 
-    useEffect(()=>{
-        async function getDepartments(){setDepartments(await performQuery("departments",`WHERE Faculty_ID = "${facultySelect}"`));}
-        getDepartments();
-    },[facultySelect]);
 
 
     return (
@@ -160,19 +154,19 @@ function Apply({}) {
                         <Form id='application-form-1' onSubmit={handleSubmitStudentInfo(onSubmit)} className="d-flex flex-column w-100 gap-3 p-2">
                             <div>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("Name")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("name")} />
                                     <span>الإسم كاملا</span>
                                 </div>
-                                {errorsStudentInfo.Name ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Name.message}</div> : ''}
+                                {errorsStudentInfo.name ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.name.message}</div> : ''}
                             </div>
 
                             <div className='w-100 d-flex flex-column flex-md-row gap-3'>
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerStudentInfo("Date_Of_Birth")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerStudentInfo("date_of_birth")} />
                                         <span>تاريخ الميلاد</span>
                                     </div>
-                                    {errorsStudentInfo.Date_Of_Birth ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Date_Of_Birth.message}</div> : ''}
+                                    {errorsStudentInfo.date_of_birth ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.date_of_birth.message}</div> : ''}
                                 </div>
                                 <div className='w-100'>
                                     <div className='d-flex gap-3 align-items-center'>
@@ -182,18 +176,18 @@ function Apply({}) {
                                             label="ذكر"
                                             name="gender-radio"
                                             value="m"
-                                            {...registerStudentInfo("Gender")}
+                                            {...registerStudentInfo("gender")}
                                         />
                                         <Form.Check
                                             type="radio"
                                             label="أنثى"
                                             name="gender-radio"
                                             value="f"
-                                            {...registerStudentInfo("Gender")}
+                                            {...registerStudentInfo("gender")}
 
                                         />
                                     </div>
-                                    {errorsStudentInfo.Gender ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Gender.message}</div> : ''}
+                                    {errorsStudentInfo.gender ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.gender.message}</div> : ''}
 
                                 </div>
                             </div>
@@ -202,18 +196,18 @@ function Apply({}) {
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentInfo("National_ID")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentInfo("national_id")} />
                                         <span>الرقم القومي</span>
                                     </div>
-                                    {errorsStudentInfo.National_ID ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.National_ID.message}</div> : ''}
+                                    {errorsStudentInfo.national_id ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.national_id.message}</div> : ''}
                                 </div>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("Address")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("address")} />
                                         <span>العنوان</span>
                                     </div>
-                                    {errorsStudentInfo.Address ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Address.message}</div> : ''}
+                                    {errorsStudentInfo.address ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.address.message}</div> : ''}
                                 </div>
 
                             </div>
@@ -222,18 +216,18 @@ function Apply({}) {
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("Mobile_No")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("mobile_no")} />
                                         <span>رقم هاتف الطالب</span>
                                     </div>
-                                    {errorsStudentInfo.Mobile_No ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Mobile_No.message}</div> : ''}
+                                    {errorsStudentInfo.mobile_no ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.mobile_no.message}</div> : ''}
                                 </div>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("Extra_Mobile_No")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("extra_mobile_no")} />
                                         <span>رقم هاتف إحتياطي للطالب</span>
                                     </div>
-                                    {errorsStudentInfo.Extra_Mobile_No ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Extra_Mobile_No.message}</div> : ''}
+                                    {errorsStudentInfo.extra_mobile_no ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.extra_mobile_no.message}</div> : ''}
                                 </div>
 
                             </div>
@@ -242,27 +236,27 @@ function Apply({}) {
 
                             <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="email" {...registerStudentInfo("Email")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="email" {...registerStudentInfo("email")} />
                                     <span>البريد الإلكتروني للطالب</span>
                                 </div>
-                                {errorsStudentInfo.Email ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Email.message}</div> : ''}
+                                {errorsStudentInfo.email ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.email.message}</div> : ''}
                             </div>
 
                             <div className='w-100 d-flex flex-column flex-md-row gap-3'>
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="password" {...registerStudentInfo("Password")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="password" {...registerStudentInfo("password")} />
                                         <span>كلمة المرور</span>
                                     </div>
-                                    {errorsStudentInfo.Password ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.Password.message}</div> : ''}
+                                    {errorsStudentInfo.password ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.password.message}</div> : ''}
                                 </div>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="password" {...registerStudentInfo("ConfirmPassword")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="password" {...registerStudentInfo("confirmpassword")} />
                                         <span>تأكيد كلمة المرور</span>
                                     </div>
-                                    {errorsStudentInfo.ConfirmPassword ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.ConfirmPassword.message}</div> : ''}
+                                    {errorsStudentInfo.confirmpassword ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.confirmpassword.message}</div> : ''}
                                     {passwordErrorMessage ? <div className='error-message text-danger mt-2'>{passwordErrorMessage}</div> : ''}
                                 </div>
 
@@ -276,20 +270,20 @@ function Apply({}) {
                         <Form id='application-form-2' onSubmit={handleSubmitParentInfo(onSubmit)} className="d-flex flex-column w-100 gap-3 p-2">
                             <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("Name")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("name")} />
                                     <span>إسم ولي الأمر كاملا</span>
                                 </div>
-                                {errorsParentInfo.Name ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Name.message}</div> : ''}
+                                {errorsParentInfo.name ? <div className='error-message text-danger mt-2'>{errorsParentInfo.name.message}</div> : ''}
                             </div>
 
                             <div className='w-100 d-flex flex-column flex-md-row gap-3'>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerParentInfo("Date_Of_Birth")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="date" {...registerParentInfo("date_of_birth")} />
                                         <span>تاريخ الميلاد</span>
                                     </div>
-                                    {errorsParentInfo.Date_Of_Birth ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Date_Of_Birth.message}</div> : ''}
+                                    {errorsParentInfo.date_of_birth ? <div className='error-message text-danger mt-2'>{errorsParentInfo.date_of_birth.message}</div> : ''}
                                 </div>
 
                                 <div className='w-100'>
@@ -300,17 +294,17 @@ function Apply({}) {
                                             label="ذكر"
                                             name="gender-radio"
                                             value="m"
-                                            {...registerParentInfo("Gender")}
+                                            {...registerParentInfo("gender")}
                                         />
                                         <Form.Check
                                             type="radio"
                                             label="أنثى"
                                             name="gender-radio"
                                             value="f"
-                                            {...registerParentInfo("Gender")}
+                                            {...registerParentInfo("gender")}
                                         />
                                     </div>
-                                    {errorsParentInfo.Gender ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Gender.message}</div> : ''}
+                                    {errorsParentInfo.gender ? <div className='error-message text-danger mt-2'>{errorsParentInfo.gender.message}</div> : ''}
                                 </div>
                             </div>
 
@@ -319,36 +313,36 @@ function Apply({}) {
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerParentInfo("National_ID")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerParentInfo("national_id")} />
                                         <span>الرقم القومي لولي الأمر</span>
                                     </div>
-                                    {errorsParentInfo.National_ID ? <div className='error-message text-danger mt-2'>{errorsParentInfo.National_ID.message}</div> : ''}
+                                    {errorsParentInfo.national_id ? <div className='error-message text-danger mt-2'>{errorsParentInfo.national_id.message}</div> : ''}
                                 </div>
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("Address")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("address")} />
                                         <span>عنوان ولي الأمر</span>
                                     </div>
-                                    {errorsParentInfo.Address ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Address.message}</div> : ''}
+                                    {errorsParentInfo.address ? <div className='error-message text-danger mt-2'>{errorsParentInfo.address.message}</div> : ''}
                                 </div>
 
                             </div>
 
                             <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("Mobile_No")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("mobile_no")} />
                                     <span>رقم هاتف ولي الأمر</span>
                                 </div>
-                                {errorsParentInfo.Mobile_No ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Mobile_No.message}</div> : ''}
+                                {errorsParentInfo.mobile_no ? <div className='error-message text-danger mt-2'>{errorsParentInfo.mobile_no.message}</div> : ''}
                             </div>
                         
                             <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("Email")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("email")} />
                                     <span>البريد الإلكتروني لولي الأمر</span>
                                 </div>
-                                {errorsParentInfo.Email ? <div className='error-message text-danger mt-2'>{errorsParentInfo.Email.message}</div> : ''}
+                                {errorsParentInfo.email ? <div className='error-message text-danger mt-2'>{errorsParentInfo.email.message}</div> : ''}
                             </div>
 
                         </Form>
@@ -357,29 +351,29 @@ function Apply({}) {
                     <Carousel.Item className='bg-white'>
                         <div className="d-flex"><h4 className='border-bottom border-2 border-black pb-2 mb-4'>معلومات المجال الدراسي</h4></div>
                         <Form id='application-form-3' onSubmit={handleSubmitApplicationInfo(onSubmit)} className="d-flex flex-column w-100 gap-3 p-2">                            
-                            <Form.Select name="Faculty_ID" {...registerApplicationInfo("Faculty_ID")} onChange={(e)=>{
+                            <Form.Select name="faculty_id" {...registerApplicationInfo("faculty_id")} onChange={(e)=>{
                                 setFacultySelect(e.target.value)
-                                setApplicationInfo("Department_ID","");
+                                setApplicationInfo("department_id","");
                                 }}>
                                 <option value="">اختر الكلية</option>
                                 {
                                     faculties.map((fac)=>
-                                    <option value={fac.Faculty_ID}>{fac.Faculty_Name}</option>
+                                    <option value={fac.faculty_id}>{fac.faculty_name}</option>
                                     )
                                 }
                             </Form.Select>    
 
-                            <Form.Select name="Department_ID" {...registerApplicationInfo("Department_ID")} >
+                            <Form.Select name="department_id" {...registerApplicationInfo("department_id")} >
                                 <option value="">اختر القسم</option>
                                 {
-                                    departments.map((dep)=>
-                                    <option value={dep.Department_ID}>{dep.Department_Name}</option>
+                                    filteredDepartments.map((dep)=>
+                                    <option value={dep.department_id}>{dep.department_name}</option>
                                     )
                                 }
                             </Form.Select>
 
                             <div className='w-100'>
-                                <Form.Select {...registerApplicationInfo("Level")} >
+                                <Form.Select {...registerApplicationInfo("level")} >
                                     <option value="">اختر المستوى الدراسي</option>
                                     {
                                         Array.from({length:getFacultyLevels()}).map((x,i)=>
@@ -387,12 +381,12 @@ function Apply({}) {
                                         )
                                     }
                                 </Form.Select>
-                                {errorsApplicationInfo.Level ? <div className='error-message text-danger mt-2'>{errorsApplicationInfo.Level.message}</div> : ''}
+                                {errorsApplicationInfo.level ? <div className='error-message text-danger mt-2'>{errorsApplicationInfo.level.message}</div> : ''}
                             </div>
 
                             {/* <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerApplicationInfo("Level")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerApplicationInfo("level")} />
                                     <span>المستوى الدراسي</span>
                                 </div>
                             </div>                 */}

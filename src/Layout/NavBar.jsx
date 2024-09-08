@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { IoMdLogIn } from "react-icons/io";
 import { FaUser } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
-import { logOut } from '../Store/Slice/auth';
-import { performQuery } from '../helpers';
+import { logOut } from '../Store/Auth/authSlice';
+import { getStudent } from '../Utils/queryFunctions';
 
 
 
@@ -27,10 +27,10 @@ function NavBar({}) {
         {
             async function getStudentName()
             {
-                const res = await performQuery("students",`WHERE Student_ID = "${loginID}"`);
-                if(res[0])
+                const res = await getStudent(loginID);
+                if(res)
                 {
-                    const fullName = res[0].Name.split(" ");
+                    const fullName = res.name.split(" ");
                     const shortName = fullName.filter((x,i) => i===0 || i===fullName.length-1).join(" ");
                     setLoginName(shortName);
                 }
@@ -39,10 +39,11 @@ function NavBar({}) {
         }
     },[loginID]);
 
+    console.log(loggedIn);
 
     return (
     <Navbar expand="sm position-sticky top-0 z-3 shadow py-0 border-bottom border-black border-2" className="bg-body-tertiary">
-        <Container className=''>
+        <Container>
             <Nav className="w-100 d-flex align-items-center">
                 <div className='d-flex flex-row'>
                     <Navbar.Brand className='m-0' to={"/"} as={Link}>
@@ -66,8 +67,8 @@ function NavBar({}) {
                                             {loginName} 
                                         </span>
                                 </span>
-                                <div className='h-100 d-flex align-items-center justify-content-center navbar-dropdown-menu'>
-                                    <div className='bg-accent rounded-circle d-flex align-items-center justify-content-center border border-2 shadow p-2 w-auto '>
+                                <div className='h-100 d-flex align-items-center justify-content-end justify-content-xl-center navbar-dropdown-menu'>
+                                    <div className='navbar-dropdown-button bg-accent rounded-circle d-flex align-items-center justify-content-center border border-2 shadow p-2 w-auto '>
                                         <FaUser size={20} color='white' />
                                     </div>
                                     <div className="position-absolute navbar-dropdown-container">

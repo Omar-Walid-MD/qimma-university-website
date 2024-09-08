@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, Col, Container, Row, Accordion, Modal, Form } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { performQuery } from '../../helpers';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { useSelector } from 'react-redux';
 import { IoMdArrowDroprightCircle } from 'react-icons/io';
 import { FaFilter, FaFilterCircleXmark } from 'react-icons/fa6';
+import { BsPersonVcard } from 'react-icons/bs';
+import { getProfessorCourses, getProfessors, getProfessorsFiltered } from '../../Utils/queryFunctions';
 
 const filterSchema = yup.object({
 
-    Name: yup.string(),
-    Email: yup.string(),
-    National_ID: yup.string(),
+    name: yup.string(),
+    email: yup.string(),
+    national_id: yup.string(),
     Mobile_No: yup.string(),
-    Department_ID: yup.string()
+    department_id: yup.string()
 });
 
 function AdminProfessors({}) {
@@ -25,19 +26,24 @@ function AdminProfessors({}) {
     const [professorInfo,setProfessorInfo] = useState();
     const [professorCourses,setProfessorCourses] = useState([]);
 
-    const [departments,setDepartments] = useState([]);
+    const departments = useSelector(store => store.data.departments);
 
     const [searchFilters,setSearchFilters] = useState({
-        Name:"",
-        National_ID: "",
+        name:"",
+        national_id: "",
         Mobile_No: "",
-        Email: "",
-        Department_ID: ""
+        email: "",
+        department_id: ""
     });
 
     const [filterModal,setFilterModal] = useState(false);
     const handleFilterClose = () => setFilterModal(false);
     const handleFilterShow = () => setFilterModal(true);
+
+    const [profInfoModal,setProfInfoModal] = useState(false);
+    const handleProfInfoClose = () => setProfInfoModal(false);
+    const handleProfInfoShow = () => setProfInfoModal(true);
+
 
     const [profCoursesModal,setProfCoursesModal] = useState(false);
     const handleProfCoursesClose = () => setProfCoursesModal(false);
@@ -50,10 +56,7 @@ function AdminProfessors({}) {
         setSearchFilters(data);
         if(Object.keys(data).some((key) => searchFilters[key]))
         {
-            const query = "WHERE " + Object.keys(data).filter((key) => data[key]).map((key)=> `${key} LIKE "%${data[key]}%"`).join(" AND ");
-            console.log(query);
-            const p = await performQuery("professors",query)
-            setProfessors(p);
+            setProfessors(getProfessorsFiltered(data));
 
         }
         else
@@ -64,24 +67,17 @@ function AdminProfessors({}) {
 
     }
 
-    async function getProfessors(){setProfessors(await performQuery("professors"));}
 
-    useEffect(()=>{
-        async function getDepartments(){setDepartments(await performQuery("departments"));}
-        getDepartments();
-    },[]);
     
     useEffect(()=>{
-        getProfessors();
+        setProfessors(getProfessors());
     },[]);
 
     useEffect(()=>{
-        async function getProfCourses()
+        if(professorInfo)
         {
-            setProfessorCourses(await performQuery("professor-courses",
-            `JOIN Courses ON Professor_Courses.Course_ID = Courses.Course_ID WHERE Prof_ID = "${professorInfo.Prof_ID}"`));
+            setProfessorCourses(getProfessorCourses(professorInfo.prof_id))
         }
-        if(professorInfo) getProfCourses();
         else setProfessorCourses([]);
 
     },[professorInfo]);
@@ -126,11 +122,11 @@ function AdminProfessors({}) {
                         onClick={()=>{
                             getProfessors();
                             setSearchFilters({
-                                Name:"",
-                                National_ID: "",
+                                name:"",
+                                national_id: "",
                                 Mobile_No: "",
-                                Email: "",
-                                Department_ID: ""
+                                email: "",
+                                department_id: ""
                             });
                         }}>
                             <FaFilterCircleXmark size={20} />
@@ -152,15 +148,15 @@ function AdminProfessors({}) {
                                 professors.map((prof,i)=>
                                 
                                     <Row className={`py-3 px-2 border-2 ${i<professors.length-1 ? "border-bottom" : ""}`}>
-                                        <Col className='col-2'>{prof.Prof_ID}</Col>
-                                        <Col className='col-2'>{prof.Name}</Col>
-                                        <Col className='col-2'>{prof.National_ID}</Col>
-                                        <Col className='col-2'>{prof.Department_ID}</Col>
+                                        <Col className='col-2'>{prof.prof_id}</Col>
+                                        <Col className='col-2'>{prof.name}</Col>
+                                        <Col className='col-2'>{prof.national_id}</Col>
+                                        <Col className='col-2'>{prof.department_id}</Col>
                                         <Col className='col-2'>
                                             <Button className='main-btn primary mt-3'
                                             onClick={()=>{
                                                 setProfessorInfo(prof);
-                                                handleProfCoursesShow();
+                                                handleProfInfoShow();
                                             }}
                                             >
                                                 عرض المعلومات
@@ -192,19 +188,19 @@ function AdminProfessors({}) {
                     <Form onSubmit={handleSubmitProfFilters(onProfFilterSubmit)} className="d-flex flex-column gap-3">
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerProfFilters("Name")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerProfFilters("name")} />
                                 <span>اسم الأستاذ</span>
                             </div>
                         </div>
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerProfFilters("National_ID")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerProfFilters("national_id")} />
                                 <span>الرقم القومي</span>
                             </div>
                         </div>
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerProfFilters("Email")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerProfFilters("email")} />
                                 <span>البريد الالكتروني</span>
                             </div>
                         </div>
@@ -217,11 +213,11 @@ function AdminProfessors({}) {
                         </div>
 
                         <div>
-                        <Form.Select aria-label="Default select example" {...registerProfFilters("Department_ID")}>
+                        <Form.Select aria-label="Default select example" {...registerProfFilters("department_id")}>
                             <option value={""}>اختر قسما</option>
                             {
                                 departments.map((dep) => 
-                                    <option value={dep.Department_ID}>{dep.Department_Name}</option>
+                                    <option value={dep.department_id}>{dep.Department_Name}</option>
                                 
                                 )
                             }
@@ -234,6 +230,75 @@ function AdminProfessors({}) {
 
             </Modal>
 
+            <Modal show={profInfoModal} onHide={handleProfInfoClose} centered className='info-modal'>
+                <Modal.Header closeButton>
+                <Modal.Title>بيانات المعلم</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                {
+                    professorInfo &&
+                    <div className='w-100 d-flex flex-column gap-4'>
+                        <div className='d-flex flex-column'>
+                            <div className='d-flex align-items-center gap-3 bg-accent text-white p-2 px-3 rounded-top'>
+                                <BsPersonVcard size={45}/>
+                                <h3 className=''>معلومات المعلم</h3>
+                            </div>
+                            <div className='w-100 d-flex flex-column border border-1 border-dark shadow rounded-bottom p-3'>                                    
+                                <Row className='w-100 g-3'>
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>إسم المعلم:</span>
+                                        <span className='fs-5'>{professorInfo.name}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>كود المعلم:</span>
+                                        <span className='fs-5'>{professorInfo.prof_id}</span>
+                                    </Col>
+
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
+                                        <span className='fs-5'>{new Date(professorInfo.date_of_birth).toLocaleDateString()}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>الرقم القومي:</span>
+                                        <span className='fs-5'>{professorInfo.national_id}</span>
+                                    </Col>
+
+                                </Row>
+                                <hr />
+                                <Row className='w-100 g-3'>
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>الإيميل الجامعي:</span>
+                                        <span className='fs-5'>{professorInfo.email}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'> العنوان:</span>
+                                        <span className='fs-5'>{professorInfo.address}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>رقم الهاتف:</span>
+                                        <span className='fs-5'>{professorInfo.Mobile_No}</span>
+                                    </Col>
+
+                                    <Col className="col-12 col-md-6 d-flex flex-column">
+                                        <span className='fs-6 text-black-50'>القسم العلمي:</span>
+                                        <span className='fs-5'>{professorInfo.department_id}</span>
+                                    </Col>
+
+
+                                </Row>
+
+                            </div>
+                        </div>
+                    </div>
+                }
+                </Modal.Body>
+            </Modal>
+
             <Modal show={profCoursesModal} onHide={handleProfCoursesClose} centered className='info-modal'>
                 <Modal.Header closeButton>
                 <Modal.Title>مقررات الأستاذ</Modal.Title>
@@ -244,10 +309,10 @@ function AdminProfessors({}) {
                         Array.from({length:4}).map((x,index)=>
                         <div>
                             <h3 className='border-bottom border-2 border-black mb-2 pb-2'>عام {2023-index}</h3>
-                            <div className='d-flex gap-5'>
+                            <div className='d-flex flex-column flex-lg-row gap-5'>
                             {
                                 Array.from({length:2}).map((x,semester)=>
-                                <div className='w-50 table-column d-flex flex-column gap-3'>
+                                <div className='w-100 table-column d-flex flex-column gap-3'>
                                     <h4 className='mb-3'>الفصل الدراسي {semester+1}</h4>
                                     <div className="table-column-scroll-wrapper">
                                         <Row className='bg-dark text-white p-2'>
@@ -260,11 +325,11 @@ function AdminProfessors({}) {
                                         {
                                             professorCourses.filter((c) => c.Year === 2023-index && c.Semester === semester+1 ) .map((course)=>
                                             <Row className="border-bottom border-2 border-gray">
-                                                <Col>{course.Course_ID}</Col>
-                                                <Col className='col-5'>{course.Course_Name}</Col>
-                                                <Col>{course.Department_ID}</Col>
-                                                <Col>{course.Level}</Col>
-                                                <Col>{course.Section_Number}</Col>
+                                                <Col>{course.course_id}</Col>
+                                                <Col className='col-5'>{course.course_name}</Col>
+                                                <Col>{course.department_id}</Col>
+                                                <Col>{course.level}</Col>
+                                                <Col>{course.section_number}</Col>
                                             </Row>
                                             )
                                         }

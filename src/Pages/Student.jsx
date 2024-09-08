@@ -3,10 +3,14 @@ import { Button, Carousel, Col, Container, Row, Accordion, Spinner } from 'react
 import { BsPersonVcard } from "react-icons/bs";
 import { FaPercent } from "react-icons/fa";
 import { Link, useNavigate } from 'react-router-dom';
-import { getGPA, performQuery } from '../helpers';
+import { getGPA } from '../Utils/helpers';
 import { useSelector } from 'react-redux';
+import { getStudent, getStudentCourses, getStudentDepartment, getStudentFaculty } from '../Utils/mysqlQueryFunctions';
 
 function Student({}) {
+
+    const faculties = useSelector(store => store.data.faculties);
+    const departments = useSelector(store => store.data.departments);
 
     const navigate = useNavigate();
     const studentID = useSelector(store => store.auth.loginID);
@@ -15,35 +19,30 @@ function Student({}) {
     const [courses,setCourses] = useState([]);
 
     useEffect(()=>{
-        async function getSudentInfo()
+        if(!loading && faculties.length && departments.length)
         {
-            const res = await performQuery("students",`WHERE Student_ID = "${studentID}"`);
-            if(res.length)
+            async function getStudentInfo()
             {
-                setStudentInfo(res[0]);
-                const dep = (await performQuery("students",`
-                    JOIN Departments ON Students.Department_ID = Departments.Department_ID
-                    WHERE Students.Student_ID = "${studentID}"
-                `))[0];
-
-                const facName = (await performQuery("departments",
-                `JOIN Faculties ON Departments.Faculty_ID = Faculties.Faculty_ID
-                WHERE Departments.Department_ID = '${dep.Department_ID}'
-                `))[0].Faculty_Name;
-
-                setStudentInfo(s =>({...s,depName:dep.Department_Name,facName}));
-
-                setCourses(await performQuery("student-courses",
-                `JOIN Courses ON Student_Courses.Course_ID = Courses.Course_ID WHERE Student_ID = "${studentID}"`));
-
+                const res = await getStudent(studentID);
+    
+                if(res)
+                {
+                    setStudentInfo(res);
+    
+                    const department = departments.find((dep) => dep.department_id === res.department_id);
+                    console.log(res);
+                    const facName = faculties.find((fac) => fac.faculty_id === department.faculty_id).faculty_name;
+                    setStudentInfo(s =>({...s,depName:department.department_name,facName}));
+    
+                    setCourses(await getStudentCourses(studentID));
+    
+                }
+                else navigate("/");
             }
-            else navigate("/");
+            getStudentInfo();
 
         }
-        if(!loading) getSudentInfo();
-    },[loading]);
-
-
+    },[loading,faculties,departments]);
 
     return (
         <div className='page-container'>
@@ -64,7 +63,7 @@ function Student({}) {
                             <Row className='w-100 g-3'>
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>إسم الطالب:</span>
-                                    <span className='fs-5'>{studentInfo.Name}</span>
+                                    <span className='fs-5'>{studentInfo.name}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
@@ -75,12 +74,12 @@ function Student({}) {
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
-                                    <span className='fs-5'>{new Date(studentInfo.Date_Of_Birth).toLocaleDateString()}</span>
+                                    <span className='fs-5'>{new Date(studentInfo.date_of_birth).toLocaleDateString()}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>الرقم القومي:</span>
-                                    <span className='fs-5'>{studentInfo.National_ID}</span>
+                                    <span className='fs-5'>{studentInfo.national_id}</span>
                                 </Col>
 
                             </Row>
@@ -88,28 +87,28 @@ function Student({}) {
                             <Row className='w-100 g-3'>
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>الإيميل الجامعي:</span>
-                                    <span className='fs-5'>{studentInfo.Email}</span>
+                                    <span className='fs-5'>{studentInfo.email}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'> العنوان:</span>
-                                    <span className='fs-5'>{studentInfo.Address}</span>
+                                    <span className='fs-5'>{studentInfo.address}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>رقم الهاتف:</span>
-                                    <span className='fs-5'>{studentInfo.Mobile_No}</span>
+                                    <span className='fs-5'>{studentInfo.mobile_no}</span>
                                 </Col>
 
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                 <span className='fs-6 text-black-50'>رقم هاتف اخر:</span>
-                                    <span className='fs-5'>{studentInfo.Extra_Mobile_No}</span>
+                                    <span className='fs-5'>{studentInfo.extra_mobile_no}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                 <span className='fs-6 text-black-50'>عام الالتحاق:</span>
-                                    <span className='fs-5'>{studentInfo.Year_Of_Enrollment}</span>
+                                    <span className='fs-5'>{studentInfo.year_of_enrollment}</span>
                                 </Col>
 
                             </Row>
@@ -128,17 +127,17 @@ function Student({}) {
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                 <span className='fs-6 text-black-50'>الفرقة الدراسية:</span>
-                                    <span className='fs-5'>{studentInfo.Level}</span>
+                                    <span className='fs-5'>{studentInfo.level}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                 <span className='fs-6 text-black-50'>المجموعة:</span>
-                                    <span className='fs-5'>{studentInfo.Section_Number}</span>
+                                    <span className='fs-5'>{studentInfo.section_number}</span>
                                 </Col>
 
                                 <Col className="col-12 col-md-6 d-flex flex-column">
                                 <span className='fs-6 text-black-50'>المعدل التراكمي:</span>
-                                    <span className='fs-5'>{studentInfo.GPA.toFixed(2)}</span>
+                                    <span className='fs-5'>{studentInfo.gpa.toFixed(2)}</span>
                                 </Col>
 
                             </Row>
@@ -155,8 +154,8 @@ function Student({}) {
                             courses.length ?
                             <Accordion defaultActiveKey={["0"]}>
                             {
-                                Array.from({length:studentInfo.Level}).map((x,level)=>
-                                courses.filter((c)=>c.Level === level+1).length>0 &&
+                                Array.from({length:studentInfo.level}).map((x,level)=>
+                                courses.filter((c)=>c.level === level+1).length>0 &&
                                 <Accordion.Item className='mb-3 border border-1 border-dark rounded-3 shadow' eventKey={`${level}`}>
                                     <Accordion.Header>
                                         <h4 className='w-100 text-center'>الفرقة {level+1}</h4>
@@ -164,7 +163,7 @@ function Student({}) {
                                     <Accordion.Body>
                                         <div className='w-100 d-flex flex-column gap-4'>
                                         {
-                                            courses.filter((c)=>c.Level === level+1 && c.Semester === 1).length>0 &&
+                                            courses.filter((c)=>c.level === level+1 && c.semester === 1).length>0 &&
                                             <div className='w-100'>
                                                 <h4>الفصل الدراسي الأول</h4>
                                                 <hr />
@@ -181,16 +180,16 @@ function Student({}) {
 
                                                         </Row>
                                                         {
-                                                            courses.filter((c)=>c.Level === level+1 && c.Semester === 1).map((c,i)=>
+                                                            courses.filter((c)=>c.level === level+1 && c.semester === 1).map((c,i)=>
 
                                                             <Row className="py-3 px-2 border-2 border-bottom">
-                                                                <Col className='col-2'>{c.Course_ID}</Col>
-                                                                <Col className='col-2'>{c.Course_Name}</Col>
-                                                                <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+                                                                <Col className='col-2'>{c.course_id}</Col>
+                                                                <Col className='col-2'>{c.course_name}</Col>
+                                                                <Col className='col-2'>{c.credit_hours} ساعات</Col>
 
-                                                                <Col className='col-2 fs-5'>{c.Classwork_Grade!==null ? c.Classwork_Grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Midterm_Grade!==null ? c.Midterm_Grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Finals_Grade!==null ? c.Finals_Grade : "--"} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.classwork_grade!==null ? c.classwork_grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.midterm_grade!==null ? c.midterm_grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.finals_grade!==null ? c.finals_grade : "--"} <span className='fs-6 text-black-50'>/60</span></Col>
 
                                                             </Row>
                                                             )
@@ -200,7 +199,7 @@ function Student({}) {
                                                         <Col>
                                                             المعدل التراكمي للفصل الدراسي: <span className='text-white'>
                                                             {
-                                                                getGPA(courses.filter((c)=>c.Level === level+1 && c.Semester === 1))
+                                                                getGPA(courses.filter((c)=>c.level === level+1 && c.semester === 1))
                                                             }
                                                             </span>
                                                         </Col>
@@ -209,7 +208,7 @@ function Student({}) {
                                             </div>
                                         }
                                         {
-                                            courses.filter((c)=>c.Level === level+1 && c.Semester === 2).length>0 &&
+                                            courses.filter((c)=>c.level === level+1 && c.semester === 2).length>0 &&
                                             <div className='w-100'>
                                                 <h4>الفصل الدراسي الثاني</h4>
                                                 <hr />
@@ -226,16 +225,16 @@ function Student({}) {
 
                                                         </Row>
                                                         {
-                                                            courses.filter((c)=>c.Level === level+1 && c.Semester === 2).map((c,i)=>
+                                                            courses.filter((c)=>c.level === level+1 && c.semester === 2).map((c,i)=>
 
                                                             <Row className="py-3 px-2 border-2 border-bottom">
-                                                                <Col className='col-2'>{c.Course_ID}</Col>
-                                                                <Col className='col-2'>{c.Course_Name}</Col>
-                                                                <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+                                                                <Col className='col-2'>{c.course_id}</Col>
+                                                                <Col className='col-2'>{c.course_name}</Col>
+                                                                <Col className='col-2'>{c.credit_hours} ساعات</Col>
 
-                                                                <Col className='col-2 fs-5'>{c.Classwork_Grade!==null ? c.Classwork_Grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Midterm_Grade!==null ? c.Midterm_Grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                <Col className='col-2 fs-5'>{c.Finals_Grade!==null ? c.Finals_Grade : "--"} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.classwork_grade!==null ? c.classwork_grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.midterm_grade!==null ? c.midterm_grade : "--"} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                <Col className='col-2 fs-5'>{c.finals_grade!==null ? c.finals_grade : "--"} <span className='fs-6 text-black-50'>/60</span></Col>
 
                                                             </Row>
                                                             )
@@ -246,7 +245,7 @@ function Student({}) {
                                                         <Col>
                                                             المعدل التراكمي للفصل الدراسي: <span className='text-white'>
                                                             {
-                                                                getGPA(courses.filter((c)=>c.Level === level+1 && c.Semester === 2))
+                                                                getGPA(courses.filter((c)=>c.level === level+1 && c.semester === 2))
                                                             }
                                                             </span>
                                                         </Col>
@@ -258,7 +257,7 @@ function Student({}) {
                                             <div className='bg-accent p-2 fs-4 text-center text-white-50 rounded-3 shadow'>
                                                 المعدل التراكمي للعام الدراسي: <span className='text-white fw-semibold'>
                                                 {
-                                                    getGPA(courses.filter((c)=>c.Level === level+1))
+                                                    getGPA(courses.filter((c)=>c.level === level+1))
                                                 }
                                                 </span>
                                             </div>

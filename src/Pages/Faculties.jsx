@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {Container,Row,Col,Button,Form} from "react-bootstrap";
 import { Link } from 'react-router-dom';
-import { performQuery } from '../helpers';
+import { useSelector } from 'react-redux';
 
 function Faculties({}) {
 
-    const [faculties,setFaculties] = useState([]);
-      
-    useEffect(()=>{
-        async function getFaculties(){setFaculties(await performQuery("faculties"));}
-        getFaculties();
-    },[]);
-
+    const faculties = useSelector(store => store.data.faculties);
     const [facSearch,setFacSearch] = useState("");
 
     return (
@@ -26,14 +20,14 @@ function Faculties({}) {
                     <hr/>
                     <Row className='g-3'>
                     {
-                        faculties.filter((fac) => fac.Faculty_Name.includes(facSearch)) .map((fac,i)=>
+                        faculties.filter((fac) => fac.faculty_name.includes(facSearch)) .map((fac,i)=>
 
                             <Col className='col-12 col-lg-6'>
-                                <Link to={`/faculty/${fac.Faculty_ID}`} className='link'>
+                                <Link to={`/faculty/${fac.faculty_id}`} className='link'>
                                     <div className='fac-bg d-flex flex-column align-content-center justify-content-center w-100 text-center text-shadow bg-dark text-white p-3 p-lg-5 rounded-3 shadow overflow-hidden'
-                                    style={{backgroundImage: `url(${require(`../assets/img/faculties/${fac.Faculty_ID}.jpg`)}`}}
+                                    style={{backgroundImage: `url(${require(`../assets/img/faculties/${fac.faculty_id}.jpg`)}`}}
                                     >
-                                        <h3 className='py-2 py-lg-4'>{fac.Faculty_Name}</h3>
+                                        <h3 className='py-2 py-lg-4'>{fac.faculty_name}</h3>
                                         <hr className='m-2'/>
                                         <p >اعرف المزيد</p>
                                     </div>

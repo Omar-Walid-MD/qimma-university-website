@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Carousel, Col, Container, Row, Accordion, Modal, Form } from 'react-bootstrap';
 import { FaArrowLeftLong } from "react-icons/fa6";
-import { getGPA, performQuery } from '../../helpers';
+import { getGPA } from '../../Utils/helpers';
 import { Link, useNavigate } from 'react-router-dom';
 import { BsPersonVcard } from 'react-icons/bs';
 import { IoMdArrowDroprightCircle } from "react-icons/io";
@@ -12,19 +12,23 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { useSelector } from 'react-redux';
+import { getParent, getStudentCourses, getStudentsFiltered } from '../../Utils/queryFunctions';
 
 const filterSchema = yup.object({
 
-    Name: yup.string(),
-    Email: yup.string(),
-    National_ID: yup.string(),
-    Mobile_No: yup.string()
+    name: yup.string(),
+    email: yup.string(),
+    national_id: yup.string(),
+    mobile_no: yup.string()
 });
 
 function AdminStudents({}) {
 
-    const [faculties,setFaculties] = useState([]);
-    const [departments,setDepartments] = useState([]);
+    const faculties = useSelector(store => store.data.faculties);
+    const departments = useSelector(store => store.data.departments);
+
+    const [filteredDepartments,setFilteredDepartments] = useState(departments);
+
     const [students,setStudents] = useState([]);
 
     const [studentInfo,setStudentInfo] = useState();
@@ -47,9 +51,8 @@ function AdminStudents({}) {
         handleStudentInfoClose();
         if(Object.keys(data).some((key) => data[key]))
         {
-            const query = "WHERE " + Object.keys(data).filter((key) => data[key]).map((key)=> `${key} LIKE "%${data[key]}%"`).join(" AND ");
-            const s = await performQuery("students",query)
-            setStudents(s);
+            getStudentsFiltered(data);
+            setStudents();
             handleFilterClose();
         }
     }
@@ -62,10 +65,10 @@ function AdminStudents({}) {
     });
 
     const [searchFilters,setSearchFilters] = useState({
-        Name: "",
-        National_ID: "",
-        Mobile_No: "",
-        Email: ""
+        name: "",
+        national_id: "",
+        mobile_no: "",
+        email: ""
     });
 
     function handleFilters(prop,value)
@@ -75,39 +78,30 @@ function AdminStudents({}) {
 
     function getFacultyFromID()
     {
-        let fac = faculties.find((fac)=>fac.Faculty_ID===filters.fac)
-        return fac ? fac.Faculty_Name : "";
+        let fac = faculties.find((fac)=>fac.faculty_id===filters.fac)
+        return fac ? fac.faculty_name : "";
     }
 
     function getDepartmentFromID()
     {
-        let dep = departments.find((dep)=>dep.Department_ID===filters.dep)
-        return dep ? dep.Department_Name : "";
+        let dep = departments.find((dep)=>dep.department_id===filters.dep)
+        return dep ? dep.department_name : "";
     }
 
 
     useEffect(()=>{
-        if(!filters.fac)
-        {
-            async function getFaculties(){setFaculties(await performQuery("faculties"));}
-            getFaculties();
-
-        }
-
         if(filters.fac && !filters.dep)
         {
-            async function getDepartments(){setDepartments(await performQuery("departments",`WHERE Faculty_ID = "${filters.fac}"`));}
-            getDepartments();
+            setFilteredDepartments(departments.filter((dep) => dep.faculty_id === filters.fac))
         }
 
         if(filters.fac && filters.dep && filters.level!==null)
         {
-            async function getStudents(){
-                setStudents(await performQuery("students",
-                `WHERE Department_ID = "${filters.dep}" AND LEVEL = ${filters.level}`));
-            }
-            getStudents();
-
+            
+            setStudents(getStudentsFiltered({
+                "department_id": filters.dep,
+                "level": filters.level
+            }))
         }
 
     },[filters]);
@@ -115,13 +109,9 @@ function AdminStudents({}) {
     useEffect(()=>{
         async function getStudentInfo()
         {
-            const studentCourses = (await performQuery("student-courses",
-            `JOIN Courses ON Student_Courses.Course_ID = Courses.Course_ID WHERE Student_ID = "${studentInfo.Student_ID}"`));
-            setStudentInfoCourses(studentCourses);
+            setStudentInfoCourses(getStudentCourses(studentInfo.student_id));
 
-            const parent = (await performQuery("parents",`WHERE Parent_ID = "${studentInfo.Parent_ID}"`))[0];
-            // console.log(parent)
-            setStudentInfoParent(parent);
+            setStudentInfoParent(getParent(studentInfo.parent_id));
         }
         if(studentInfo) getStudentInfo();
     },[studentInfo]);
@@ -193,10 +183,10 @@ function AdminStudents({}) {
                                 onClick={()=>{
                                     setStudents([]);
                                     setSearchFilters({
-                                        Name: "",
-                                        National_ID: "",
-                                        Mobile_No: "",
-                                        Email: ""
+                                        name: "",
+                                        national_id: "",
+                                        mobile_no: "",
+                                        email: ""
                                     });
                                 }}>
                                     <FaFilterCircleXmark size={20} />
@@ -227,11 +217,11 @@ function AdminStudents({}) {
                                     students.map((s,i)=>
 
                                     <Row className="py-3 px-2 border-2 border-bottom">
-                                        <Col className='col-2'>{s.Student_ID}</Col>
-                                        <Col className='col-3'>{s.Name}</Col>
-                                        <Col className='col-2'>{s.National_ID}</Col>
-                                        <Col className='col-2'>{s.Mobile_No}</Col>
-                                        <Col className='col-1'>{s.Section_Number}</Col>
+                                        <Col className='col-2'>{s.student_id}</Col>
+                                        <Col className='col-3'>{s.name}</Col>
+                                        <Col className='col-2'>{s.national_id}</Col>
+                                        <Col className='col-2'>{s.mobile_no}</Col>
+                                        <Col className='col-1'>{s.section_number}</Col>
                                         <Col className='col-2'>
                                             <Button className='main-btn primary' onClick={()=>{handleStudentInfoShow();setStudentInfo(s)}}>
                                                 عرض المعلومات
@@ -253,9 +243,9 @@ function AdminStudents({}) {
                             <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
-                                onClick={()=>handleFilters("fac",fac.Faculty_ID)}
+                                onClick={()=>handleFilters("fac",fac.faculty_id)}
                                 >
-                                    <h4>{fac.Faculty_Name}</h4>
+                                    <h4>{fac.faculty_name}</h4>
                                 </Button>
                             </Col>
                         )
@@ -267,13 +257,13 @@ function AdminStudents({}) {
                         <h3 className='mb-2'>اختيار القسم</h3>
                         <Row className='w-100'>
                         {
-                            departments.map((dep,i)=>
+                            filteredDepartments.map((dep,i)=>
                             <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
-                                onClick={()=>handleFilters("dep",dep.Department_ID)}
+                                onClick={()=>handleFilters("dep",dep.department_id)}
                                 >
-                                    <h4>{dep.Department_Name}</h4>
+                                    <h4>{dep.department_name}</h4>
                                 </Button>
                             </Col>
                         )
@@ -285,7 +275,7 @@ function AdminStudents({}) {
                         <h3 className='mb-2'>اختيار الفرقة</h3>
                         <Row className='w-100'>
                         {
-                            Array.from({length:faculties.find((f) => f.Faculty_ID === filters.fac).NoOfLevels || 0}).map((x,i)=>
+                            Array.from({length:faculties.find((f) => f.faculty_id === filters.fac).nooflevels || 0}).map((x,i)=>
                             <Col className='col-12 col-md-6 p-1'>
                                 <Button variant='transparent'
                                 className='w-100 p-3 border border-2 border-black rounded-3 shadow'
@@ -313,26 +303,26 @@ function AdminStudents({}) {
                     <Form onSubmit={handleSubmitStudentFilters(onStudentFilterSubmit)} className="d-flex flex-column gap-3">
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("Name")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("name")} />
                                 <span>اسم الطالب</span>
                             </div>
                         </div>
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentFilters("National_ID")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentFilters("national_id")} />
                                 <span>الرقم القومي</span>
                             </div>
                         </div>
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("Email")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("email")} />
                                 <span>البريد الالكتروني</span>
                             </div>
                         </div>
 
                         <div>
                             <div className='labeled-input'>
-                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("Mobile_No")} />
+                                <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentFilters("mobile_no")} />
                                 <span>رقم الهاتف</span>
                             </div>
                         </div>
@@ -362,23 +352,23 @@ function AdminStudents({}) {
                                 <Row className='w-100 g-3'>
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>إسم الطالب:</span>
-                                        <span className='fs-5'>{studentInfo.Name}</span>
+                                        <span className='fs-5'>{studentInfo.name}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>كود الطالب:</span>
-                                        <span className='fs-5'>{studentInfo.Student_ID}</span>
+                                        <span className='fs-5'>{studentInfo.student_id}</span>
                                     </Col>
 
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
-                                        <span className='fs-5'>{new Date(studentInfo.Date_Of_Birth).toLocaleDateString()}</span>
+                                        <span className='fs-5'>{new Date(studentInfo.date_of_birth).toLocaleDateString()}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الرقم القومي:</span>
-                                        <span className='fs-5'>{studentInfo.National_ID}</span>
+                                        <span className='fs-5'>{studentInfo.national_id}</span>
                                     </Col>
 
                                 </Row>
@@ -386,28 +376,28 @@ function AdminStudents({}) {
                                 <Row className='w-100 g-3'>
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الإيميل الجامعي:</span>
-                                        <span className='fs-5'>{studentInfo.Email}</span>
+                                        <span className='fs-5'>{studentInfo.email}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'> العنوان:</span>
-                                        <span className='fs-5'>{studentInfo.Address}</span>
+                                        <span className='fs-5'>{studentInfo.address}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>رقم الهاتف:</span>
-                                        <span className='fs-5'>{studentInfo.Mobile_No}</span>
+                                        <span className='fs-5'>{studentInfo.mobile_no}</span>
                                     </Col>
 
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>رقم هاتف اخر:</span>
-                                        <span className='fs-5'>{studentInfo.Extra_Mobile_No}</span>
+                                        <span className='fs-5'>{studentInfo.extra_mobile_no}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>عام الالتحاق:</span>
-                                        <span className='fs-5'>{studentInfo.Year_Of_Enrollment}</span>
+                                        <span className='fs-5'>{studentInfo.year_of_enrollment}</span>
                                     </Col>
 
                                 </Row>
@@ -416,17 +406,17 @@ function AdminStudents({}) {
                         
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>الفرقة الدراسية:</span>
-                                        <span className='fs-5'>{studentInfo.Level}</span>
+                                        <span className='fs-5'>{studentInfo.level}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>المجموعة:</span>
-                                        <span className='fs-5'>{studentInfo.Section_Number}</span>
+                                        <span className='fs-5'>{studentInfo.section_number}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                     <span className='fs-6 text-black-50'>المعدل التراكمي:</span>
-                                        <span className='fs-5'>{studentInfo.GPA.toFixed(2)}</span>
+                                        <span className='fs-5'>{studentInfo.gpa.toFixed(2)}</span>
                                     </Col>
 
                                 </Row>
@@ -444,17 +434,17 @@ function AdminStudents({}) {
                                 <Row className='w-100 g-3'>
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>إسم ولي الأمر:</span>
-                                        <span className='fs-5'>{studentInfoParent.Name}</span>
+                                        <span className='fs-5'>{studentInfoParent.name}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>تاريخ الميلاد:</span>
-                                        <span className='fs-5'>{new Date(studentInfoParent.Date_Of_Birth).toLocaleDateString()}</span>
+                                        <span className='fs-5'>{new Date(studentInfoParent.date_of_birth).toLocaleDateString()}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>الرقم القومي:</span>
-                                        <span className='fs-5'>{studentInfoParent.National_ID}</span>
+                                        <span className='fs-5'>{studentInfoParent.national_id}</span>
                                     </Col>
 
                                 </Row>
@@ -462,12 +452,12 @@ function AdminStudents({}) {
                                 <Row className='w-100 g-3'>
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>البريد الالكتروني:</span>
-                                        <span className='fs-5'>{studentInfoParent.Email}</span>
+                                        <span className='fs-5'>{studentInfoParent.email}</span>
                                     </Col>
 
                                     <Col className="col-12 col-md-6 d-flex flex-column">
                                         <span className='fs-6 text-black-50'>رقم الهاتف:</span>
-                                        <span className='fs-5'>{studentInfoParent.Mobile_No}</span>
+                                        <span className='fs-5'>{studentInfoParent.mobile_no}</span>
                                     </Col>
 
                                 </Row>
@@ -482,7 +472,7 @@ function AdminStudents({}) {
                             <div className='w-100 d-flex flex-column border border-1 border-dark shadow rounded-bottom p-3'>
                                 <Accordion defaultActiveKey={["0"]}>
                                 {
-                                    Array.from({length:studentInfo.Level}).map((x,level)=>
+                                    Array.from({length:studentInfo.level}).map((x,level)=>
                                     <Accordion.Item className='mb-3 border border-1 border-dark rounded-3 shadow' eventKey={`${level}`}>
                                         <Accordion.Header>
                                             <h4 className='w-100 text-center'>الفرقة {level+1}</h4>
@@ -505,16 +495,16 @@ function AdminStudents({}) {
 
                                                             </Row>
                                                             {
-                                                                studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 1).map((c,i)=>
+                                                                studentInfoCourses.filter((c)=>c.level === level+1 && c.semester === 1).map((c,i)=>
 
                                                                 <Row className="py-3 px-2 border-2 border-bottom">
-                                                                    <Col className='col-2'>{c.Course_ID}</Col>
-                                                                    <Col className='col-2'>{c.Course_Name}</Col>
-                                                                    <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+                                                                    <Col className='col-2'>{c.course_id}</Col>
+                                                                    <Col className='col-2'>{c.course_name}</Col>
+                                                                    <Col className='col-2'>{c.credit_hours} ساعات</Col>
 
-                                                                    <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                    <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                    <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.classwork_grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.midterm_grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.finals_grade} <span className='fs-6 text-black-50'>/60</span></Col>
 
                                                                 </Row>
                                                                 )
@@ -524,7 +514,7 @@ function AdminStudents({}) {
                                                             <Col>
                                                                 المعدل التراكمي للفصل الدراسي: <span className='text-white'>
                                                                 {
-                                                                    getGPA(studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 1))
+                                                                    getGPA(studentInfoCourses.filter((c)=>c.level === level+1 && c.semester === 1))
                                                                 }
                                                                 </span>
                                                             </Col>
@@ -547,16 +537,16 @@ function AdminStudents({}) {
 
                                                             </Row>
                                                             {
-                                                                studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 2).map((c,i)=>
+                                                                studentInfoCourses.filter((c)=>c.level === level+1 && c.semester === 2).map((c,i)=>
 
                                                                 <Row className="py-3 px-2 border-2 border-bottom">
-                                                                    <Col className='col-2'>{c.Course_ID}</Col>
-                                                                    <Col className='col-2'>{c.Course_Name}</Col>
-                                                                    <Col className='col-2'>{c.Credit_Hours} ساعات</Col>
+                                                                    <Col className='col-2'>{c.course_id}</Col>
+                                                                    <Col className='col-2'>{c.course_name}</Col>
+                                                                    <Col className='col-2'>{c.credit_hours} ساعات</Col>
 
-                                                                    <Col className='col-2 fs-5'>{c.Classwork_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                    <Col className='col-2 fs-5'>{c.Midterm_Grade} <span className='fs-6 text-black-50'>/20</span></Col>
-                                                                    <Col className='col-2 fs-5'>{c.Finals_Grade} <span className='fs-6 text-black-50'>/60</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.classwork_grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.midterm_grade} <span className='fs-6 text-black-50'>/20</span></Col>
+                                                                    <Col className='col-2 fs-5'>{c.finals_grade} <span className='fs-6 text-black-50'>/60</span></Col>
 
                                                                 </Row>
                                                                 )
@@ -567,7 +557,7 @@ function AdminStudents({}) {
                                                             <Col>
                                                                 المعدل التراكمي للفصل الدراسي: <span className='text-white'>
                                                                 {
-                                                                    getGPA(studentInfoCourses.filter((c)=>c.Level === level+1 && c.Semester === 2))
+                                                                    getGPA(studentInfoCourses.filter((c)=>c.level === level+1 && c.semester === 2))
                                                                 }
                                                                 </span>
                                                             </Col>
@@ -577,7 +567,7 @@ function AdminStudents({}) {
                                                 <div className='bg-accent p-2 fs-4 text-center text-white-50 rounded-3 shadow'>
                                                     المعدل التراكمي للعام الدراسي: <span className='text-white fw-semibold'>
                                                     {
-                                                        getGPA(studentInfoCourses.filter((c)=>c.Level === level+1))
+                                                        getGPA(studentInfoCourses.filter((c)=>c.level === level+1))
                                                     }
                                                     </span>
                                                 </div>
