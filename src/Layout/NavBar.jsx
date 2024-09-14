@@ -39,8 +39,6 @@ function NavBar({}) {
         }
     },[loginID]);
 
-    console.log(loggedIn);
-
     return (
     <Navbar expand="sm position-sticky top-0 z-3 shadow py-0 border-bottom border-black border-2" className="bg-body-tertiary">
         <Container>

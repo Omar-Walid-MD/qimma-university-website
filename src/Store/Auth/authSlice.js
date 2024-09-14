@@ -42,9 +42,8 @@ export const authSlice = createSlice({
       })
       .addCase(getLoginID.fulfilled, (state, action) => {
         state.loginID = action.payload || "";
-        state.loggedIn = action.payload!==null;
+        state.loggedIn = action.payload!=="";
         state.loading = false;
-        console.log(action.payload);
       })
       .addCase(getLoginID.rejected, (state, action) => {
         state.loading = false;
@@ -56,7 +55,7 @@ export const authSlice = createSlice({
       })
       .addCase(setLoginID.fulfilled, (state, action) => {
         state.loginID = action.payload || "";
-        state.loggedIn = action.payload!==null;
+        state.loggedIn = action.payload!=="";
         state.loading = false;
       })
       .addCase(setLoginID.rejected, (state, action) => {

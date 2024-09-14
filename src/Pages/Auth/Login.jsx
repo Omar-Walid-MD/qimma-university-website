@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {Form,Container,FloatingLabel,Button} from "react-bootstrap";
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { setLoginID } from '../../Store/Auth/authSlice';
-import { getRegisteredLogin, getStudentsFiltered } from '../../Utils/queryFunctions';
+import { getRandomStudentLogin, getRegisteredLogin, getStudentsFiltered } from '../../Utils/queryFunctions';
 
 function Login({}) {
 
@@ -17,6 +17,19 @@ function Login({}) {
     });
 
     const [errorMessage,setErrorMessage] = useState("");
+
+    async function fillDemoAccount()
+    {
+        if(loginType==="student")
+        {
+            const res = await getRandomStudentLogin();
+            setLoginInfo(res);
+        }
+        else if(loginType==="admin")
+        {
+            setLoginInfo({email:"admin@email.com",password:"admin123"})
+        }
+    }
 
     async function onLogin()
     {
@@ -47,6 +60,10 @@ function Login({}) {
     {
         setLoginInfo(l => ({...l,[e.target.name]:e.target.value}));
     }
+
+    useEffect(()=>{
+        setLoginInfo({email:"",password:""});
+    },[loginType])
 
 
     return (
@@ -92,10 +109,15 @@ function Login({}) {
                             <Form.Control type="password" placeholder="Password" value={loginInfo.password} name='password' onChange={handleLoginInfo} />
                         </FloatingLabel>
                         {errorMessage && <p className='text-danger'>{errorMessage}</p>}
+
+                        <div className='w-100 d-flex justify-content-start'>
+                            <Button className='main-btn' onClick={()=>fillDemoAccount()}>استخدام حساب موجود!</Button>
+                        </div>
+
                         <div className='w-100'>
                             <Link>نسيت كلمة المرور؟</Link>
                         </div>
-                        <Button className='main-btn primary text-dark fs-5 w-100' onClick={()=>onLogin()}>تسجيل الدخول</Button>
+                        <Button className='main-btn primary fs-5 w-100' onClick={()=>onLogin()}>تسجيل الدخول</Button>
                     </div>
                 </div>
             </Form>

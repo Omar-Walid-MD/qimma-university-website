@@ -41,7 +41,7 @@ const schemas = [
 
     faculty_id: yup.string().required("رجاءا اختر الكلية"),
     department_id: yup.string().required("رجاءا اختر القسم العلمي"),
-    level: yup.number().required("رجاءا اختر المستوى")
+    level: yup.number("رجاءا اختر المستوى").required("رجاءا اختر المستوى")
 
   }).required(),
   
@@ -52,7 +52,7 @@ function Apply({}) {
 
     const navigate = useNavigate();
     
-    const [formIndex,setFormIndex] = useState(1);
+    const [formIndex,setFormIndex] = useState(0);
 
     const faculties = useSelector(store => store.data.faculties);
     const departments = useSelector(store => store.data.departments);
@@ -74,7 +74,8 @@ function Apply({}) {
     function getFacultyLevels()
     {
         const fac = faculties.find((f) => f.faculty_id === facultySelect);
-        return fac ? fac.NoOfLevels : 0;
+        console.log(facultySelect);
+        return fac ? fac.nooflevels : 0;
     }
 
     function prevFormIndex()
@@ -111,11 +112,13 @@ function Apply({}) {
         else if(formIndex === 2)
         {
 
-            const parent_ID_List = await getAllParentsIds().map((p_id)=>p_id.slice(1));
+            let parent_ID_List = await getAllParentsIds();
+
+            parent_ID_List = parent_ID_List.map((p)=>p.parent_id.slice(1));
             const new_parent_ID = "P"+makeUniqueId(parent_ID_List,8)
             await addParent({...updatedApplyInfo[1],parent_id:new_parent_ID});
     
-            const student_ID_List = await getAllStudentsIds().map((s_id)=>s_id.slice(1));
+            const student_ID_List = (await getAllStudentsIds()).map((s)=>s.student_id.slice(1));
             const new_student_ID = "S"+makeUniqueId(student_ID_List,8)
 
             await addStudent({...updatedApplyInfo[0],student_id:new_student_ID,parent_id:new_parent_ID,...updatedApplyInfo[2]});
@@ -216,7 +219,7 @@ function Apply({}) {
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("mobile_no")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentInfo("mobile_no")} />
                                         <span>رقم هاتف الطالب</span>
                                     </div>
                                     {errorsStudentInfo.mobile_no ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.mobile_no.message}</div> : ''}
@@ -224,7 +227,7 @@ function Apply({}) {
 
                                 <div className='w-100'>
                                     <div className='labeled-input'>
-                                        <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerStudentInfo("extra_mobile_no")} />
+                                        <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerStudentInfo("extra_mobile_no")} />
                                         <span>رقم هاتف إحتياطي للطالب</span>
                                     </div>
                                     {errorsStudentInfo.extra_mobile_no ? <div className='error-message text-danger mt-2'>{errorsStudentInfo.extra_mobile_no.message}</div> : ''}
@@ -331,7 +334,7 @@ function Apply({}) {
 
                             <div className='w-100'>
                                 <div className='labeled-input'>
-                                    <input className='p-2 rounded-1 w-100' placeholder='' type="text" {...registerParentInfo("mobile_no")} />
+                                    <input className='p-2 rounded-1 w-100' placeholder='' type="number" {...registerParentInfo("mobile_no")} />
                                     <span>رقم هاتف ولي الأمر</span>
                                 </div>
                                 {errorsParentInfo.mobile_no ? <div className='error-message text-danger mt-2'>{errorsParentInfo.mobile_no.message}</div> : ''}

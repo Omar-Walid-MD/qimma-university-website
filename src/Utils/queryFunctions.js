@@ -1,8 +1,8 @@
 import axios from "axios";
 
-async function performQuery(table,condition="")
-{   
-    const res = await axios.get(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/${table}`,{params:{condition:condition}});
+async function performQuery(table,condition="",columns="*")
+{
+    const res = await axios.get(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/${table}`,{params:{condition,columns}});
     
     for (let i = 0; i < res.data.length; i++)
     {
@@ -100,25 +100,30 @@ export async function getRegisteredLogin(email)
 
 export async function getAllParentsIds()
 {
-    return await axios.get(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/parents`,{params:{arguments:"parent_id"}});
+    return await performQuery("parents","","Parent_ID");
 }
 
 export async function getAllStudentsIds()
 {
-    return await axios.get(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/students`,{params:{arguments:"student_id"}});
+    return await performQuery("students","","Student_ID");
 }
 
 export async function addParent(parent)
 {
-    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/parents`,parent);
+    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/parents`,parent);
 }
 
 export async function addStudent(student)
 {
-    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/students`,student);
+    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/students`,student);
 }
 
 export async function addLogin(login)
 {
-    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}/login`,login);
+    return await axios.post(`http://${process.env.REACT_APP_SQL_HOST}:${process.env.REACT_APP_SQL_PORT}/login`,login);
+}
+
+export async function getRandomStudentLogin()
+{
+    return (await performQuery("login","ORDER BY RAND() LIMIT 1"))[0];
 }

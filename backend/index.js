@@ -28,7 +28,7 @@ app.use(cors());
 
 
 app.get('/students', (req, res) => {
-  const query = 'SELECT * FROM students ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM students ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching students:', err);
@@ -42,21 +42,21 @@ app.post('/students', (req, res) => {
 
   const s = req.body;
   const value = [
-    s.Student_ID,
-    s.Name,
-    s.Date_Of_Birth.split("T")[0],
-    s.National_ID,
-    s.Mobile_No, 
-    s.Extra_Mobile_No,
-    s.Email,
-    s.Address,
-    s.Gender,
-    s.Parent_ID,
-    s.Department_ID,
+    s.student_id,
+    s.name,
+    s.date_of_birth.split("T")[0],
+    s.national_id,
+    s.mobile_no, 
+    s.extra_mobile_no,
+    s.email,
+    s.address,
+    s.gender,
+    s.parent_id,
+    s.department_id,
     1,
-    s.Level,
+    s.level,
     0,
-    2023
+    2024
   ];
 
   const query = 'INSERT INTO students VALUES (?)';
@@ -70,7 +70,7 @@ app.post('/students', (req, res) => {
 });
 
 app.get('/parents', (req, res) => {
-  const query = 'SELECT * FROM parents ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM parents ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching parents:', err);
@@ -84,7 +84,7 @@ app.post('/parents', (req, res) => {
 
   const p = req.body;
   console.log(p);
-  const value = [p.Parent_ID,p.Name,p.Date_Of_Birth.split("T")[0],p.National_ID,p.Mobile_No,p.Email,p.Address,p.Gender];
+  const value = [p.parent_id,p.name,p.date_of_birth.split("T")[0],p.national_id,p.mobile_no,p.email,p.address,p.gender];
 
   const query = 'INSERT INTO parents VALUES (?)';
   db.query(query,[value], (err, data) => {
@@ -97,7 +97,7 @@ app.post('/parents', (req, res) => {
 });
 
 app.get('/faculties', (req, res) => {
-  const query = 'SELECT * FROM Faculties ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Faculties ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching faculties:', err);
@@ -108,7 +108,7 @@ app.get('/faculties', (req, res) => {
 });
 
 app.get('/departments', (req, res) => {
-  const query = 'SELECT * FROM Departments ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Departments ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching departments:', err);
@@ -124,7 +124,7 @@ app.get('/departments', (req, res) => {
 
 
 app.get('/professors', (req, res) => {
-  const query = 'SELECT * FROM Professors ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Professors ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching professors:', err);
@@ -137,7 +137,7 @@ app.get('/professors', (req, res) => {
 
 
 app.get('/courses', (req, res) => {
-  const query = 'SELECT * FROM Courses ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Courses ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching courses:', err);
@@ -149,7 +149,7 @@ app.get('/courses', (req, res) => {
 
 
 app.get('/department-courses', (req, res) => {
-  const query = 'SELECT * FROM Department_Courses ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Department_Courses ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching Department Courses:', err);
@@ -161,7 +161,7 @@ app.get('/department-courses', (req, res) => {
   
 
 app.get('/student-courses', (req, res) => {
-  const query = 'SELECT * FROM Student_Courses ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Student_Courses ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching student courses:', err);
@@ -186,7 +186,7 @@ app.post('/student-courses', (req, res) => {
 });
 
 app.get('/professor-courses', (req, res) => {
-  const query = 'SELECT * FROM Professor_Courses ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM Professor_Courses ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching professor courses:', err);
@@ -197,7 +197,7 @@ app.get('/professor-courses', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const query = 'SELECT * FROM login ' + req.query.condition;
+  const query = 'SELECT ' + (req.query.columns || "*") + ' FROM login ' + req.query.condition;
   db.query(query, (err, data) => {
     if (err) {
       console.error('Error fetching login:', err);
