@@ -5,7 +5,7 @@ import { IoMdLogIn } from "react-icons/io";
 import { FaUser } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
 import { logOut } from '../Store/Auth/authSlice';
-import { getStudent } from '../Utils/queryFunctions';
+import { addParent, getAllParentsIds, getAllStudentsIds, getStudent } from '../Utils/queryFunctions';
 
 
 

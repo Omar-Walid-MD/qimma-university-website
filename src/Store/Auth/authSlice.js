@@ -10,7 +10,7 @@ const initialState = {
 export const getLoginID = createAsyncThunk(
     'auth/getLoginID',
     async () => {
-      const loginID = localStorage.getItem("loginID");
+      const loginID = localStorage.getItem("loginID") || "";
       return loginID;
 });
 
